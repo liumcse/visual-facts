@@ -1,0 +1,23 @@
+:local {
+  .commitTab {
+    padding: 1rem 1.5rem 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    cursor: pointer;
+
+    &:hover {
+      background-color: rgba(196, 196, 196, 0.404);
+    }
+
+    .message {
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+
+    .date {
+      white-space: nowrap;
+      padding-left: 2rem;
+    }
+  }
+}

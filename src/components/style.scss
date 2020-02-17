@@ -1,0 +1,31 @@
+:local {
+  .container {
+    display: flex;
+    flex-direction: column;
+    font-family: "Open Sans", sans-serif;
+  }
+
+  .upperContainer {
+    border-bottom: 1px solid #b4b4b4;
+  }
+
+  .lowerContainer {
+    display: flex;
+    max-height: calc(100vh - 103px);
+  }
+
+  .leftPane {
+    flex: 5;
+    border-right: 1px solid #b4b4b4;
+    overflow-y: scroll;
+    padding: 0.5rem 0 0.5rem 0;
+  }
+
+  .rightPane {
+    flex: 3;
+  }
+
+  .tempButton {
+    margin: 1rem;
+  }
+}

@@ -1,0 +1,40 @@
+:local {
+  .container {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    // height: 2.5rem;
+    padding: 1.5rem;
+  }
+
+  .repoContainer {
+    .label {
+      color: grey;
+      font-size: 0.8rem;
+      margin-bottom: 0.5rem;
+    }
+    .content {
+      margin-top: 1.2rem;
+      font-weight: 700;
+    }
+  }
+
+  .branchContainer {
+    margin-left: 2rem;
+
+    .label {
+      color: grey;
+      font-size: 0.8rem;
+      margin-bottom: 0.5rem;
+    }
+  }
+
+  .select {
+    width: 10rem;
+    height: 2rem;
+
+    div {
+      border: 0;
+    }
+  }
+}
