@@ -9,7 +9,7 @@ type Props = {
   handleCommitTabClick: (index: number) => void;
 };
 
-export function CommitList(props: Props) {
+export default function CommitList(props: Props) {
   const { commits, handleCommitTabClick } = props;
   return (
     <div>

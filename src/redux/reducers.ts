@@ -1,7 +1,13 @@
 // @ts-nocheck
 import * as actionTypes from "./actionTypes";
 
-export default (state, action) => {
+const initialState = {
+  branch: [],
+  relationGraph: null,
+  selectedPath: "",
+};
+
+export default (state = initialState, action) => {
   const { type, payload } = action;
   switch (type) {
     case actionTypes.SWITCH_BRANCH:
@@ -13,6 +19,11 @@ export default (state, action) => {
       return {
         ...state,
         relationGraph: payload,
+      };
+    case actionTypes.UPDATE_SELECTED_PATH:
+      return {
+        ...state,
+        selectedPath: payload,
       };
     default:
       // throw new Error("Invalid action");

@@ -5,53 +5,19 @@ import DagreD3 from "./DagreD3.jsx";
 
 import * as styles from "./style.scss";
 
-import {
-  RelationGraph,
-  Relation,
-  Entity,
-  EntityTrie,
-} from "@root/libs/dataStructures";
-import * as parser from "@root/libs/parser";
+import { RelationGraph, EntityTrie } from "@root/libs/dataStructures";
 import { connect } from "react-redux";
 
-function createRelationGraph() {
-  const graph = new RelationGraph();
-  // TODO: get path from parameter
-  const factTuples = parser.loadFactTuple(
-    "/Users/ming/Desktop/FYP/app/src/dummyData/dep-csv.ta",
-  );
-  for (const factTuple of factTuples) {
-    if (!factTuple) continue;
-    const parsed = parser.parseFactTuple(factTuple);
-    // Add to graph
-    graph.addRelation(
-      new Relation(
-        new Entity(parsed.from),
-        new Entity(parsed.to),
-        parsed.relationType,
-      ),
-    );
-  }
-  return graph;
-}
-
-function relationGraphToDagre(graph: RelationGraph) {
+function relationGraphToDagre(graph: RelationGraph, selectedPath?: string) {
   const dagre: any = {
     nodes: {},
     edges: [],
   };
-  const entities = graph.getAllEntities();
-  // Add to trie
-  const trie = new EntityTrie();
-  for (const entity of entities) {
-    trie.addEntity(entity);
-  }
+  // const entities = graph.getAllEntities();
+  const trie = graph.getTrie();
+  const entities = graph.getEntitiesByPrefix(selectedPath);
   console.log("trie root", trie.root);
-  console.log(
-    "names",
-    trie.listEntitiesUnderPrefix(/* "org.apache.commons.csv" */),
-  );
-  // const map = graph.getMap();
+  console.log("names", trie.listEntitiesUnderPrefix(selectedPath));
   const entityToNumber: any = {};
   let counter = 1;
   for (const entity of entities) {
@@ -81,11 +47,16 @@ function relationGraphToDagre(graph: RelationGraph) {
   return dagre;
 }
 
-function Visualization(props) {
+type Props = {
+  relationGraph: any;
+  selectedPath?: string;
+};
+
+function Visualization(props: Props) {
   // const relationGraph = createRelationGraph();
   // console.log(relationGraph.getStats());
-  const { relationGraph } = props;
-  const dagre = relationGraphToDagre(relationGraph);
+  const { relationGraph, selectedPath } = props;
+  const dagre = relationGraphToDagre(relationGraph, selectedPath);
   return (
     <div className={styles.canvas}>
       <DagreD3
@@ -101,6 +72,7 @@ function Visualization(props) {
 // TODO: fix the type
 const mapStateToProps = (state: any) => ({
   relationGraph: state.relationGraph || new RelationGraph(),
+  selectedPath: state.selectedPath,
 });
 
 export default connect(mapStateToProps)(Visualization);

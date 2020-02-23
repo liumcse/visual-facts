@@ -14,3 +14,10 @@ export function updateRelationGraph(relationGraph: RelationGraph) {
     payload: relationGraph,
   };
 }
+
+export function updateSelectedPath(selectedPath: string) {
+  return {
+    type: actionTypes.UPDATE_SELECTED_PATH,
+    payload: selectedPath,
+  };
+}

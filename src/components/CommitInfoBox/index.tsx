@@ -4,7 +4,7 @@ import { Commit } from "nodegit";
 
 import * as styles from "./style.scss";
 
-export function CommitInfoBox({ commit }: { commit: Commit | null }) {
+export default function CommitInfoBox({ commit }: { commit: Commit | null }) {
   if (!commit) {
     return (
       <div className={styles.container}>

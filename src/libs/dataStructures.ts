@@ -1,3 +1,5 @@
+import * as utils from "../utils";
+
 export enum EntityType {
   FUNCTION = "function",
   CLASS = "class",
@@ -176,9 +178,9 @@ export class RelationGraph {
    * Returns entities with given prefix
    * @param prefix Prefix of the entity name; e.g. org.apache.commons.csv
    */
-  getEntitiesByPrefix(prefix: string) {
+  getEntitiesByPrefix(prefix?: string) {
     // TODO: refactor the method by implementing a trie-like structure to speed up filtering
-    if (prefix === "") return this.nodes;
+    if (!prefix) return this.nodes;
     return this.nodes.filter(node => node.getName().includes(prefix));
   }
 
@@ -246,7 +248,7 @@ export class EntityTrie {
    * @param entity Entity to be added to the trie
    */
   addEntity(entity: Entity) {
-    const namePath = entity.getName().split(".");
+    const namePath = utils.convertEntityNameToPath(entity.getName());
     let temp = this.root;
     for (const loc of namePath) {
       if (typeof temp.children.get(loc) !== "undefined") {
@@ -277,11 +279,12 @@ export class EntityTrie {
         entityType: entityTrieNode.entityType,
       }));
     }
-    const splittedName = prefix.split(".");
+    const splittedName = utils.convertEntityNameToPath(prefix);
     let temp = this.root;
     for (const loc of splittedName) {
       if (typeof temp.children.get(loc) === "undefined") {
-        throw new Error("Not exist");
+        // throw new Error("Not exist");
+        continue;
       }
       temp = temp.children.get(loc) as EntityTrieNode;
     }
