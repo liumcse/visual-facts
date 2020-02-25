@@ -11,6 +11,7 @@ import * as styles from "./style.scss";
 
 type Props = {
   data?: object;
+  selectedPath?: string;
   relationGraph: RelationGraph;
   updateSelectedPath: Function;
 };
@@ -59,44 +60,71 @@ function PathTree(props: Props) {
   }
 
   function Tab(node: TreeNode) {
+    function entityTypeToColor(entityType: EntityType | null | undefined) {
+      switch (entityType) {
+        case EntityType.CLASS:
+          return "blue";
+        case EntityType.FUNCTION:
+          return "green";
+        default:
+          return "red";
+      }
+    }
+
     return (
       <span
         className={styles.tab}
         onClick={() => {
           if (!node.entityType) {
-            console.log("Invalid path. Must at least be an entity!");
+            alert("Invalid path. Path must lead to an entity!");
             return;
           }
           const selectedPath = node.path.slice(1);
           handleClick(selectedPath);
         }}
       >
-        {`${node.label} ${node.entityType ? "<" + node.entityType + ">" : ""}`}
+        {node.label}{" "}
+        {node.entityType ? (
+          <span style={{ color: entityTypeToColor(node.entityType) }}>
+            {"<" + node.entityType + ">"}
+          </span>
+        ) : (
+          ""
+        )}
       </span>
     );
   }
 
   const { relationGraph } = props;
   if (!relationGraph) {
-    return <div>Initializing</div>;
+    return <div style={{ padding: " 0 1rem 1rem 1rem" }}>Initializing</div>;
   }
   const trie = relationGraph.getTrie();
   const pathTreeNode = convertTrieToPathTreeNode(trie);
-  console.log({ pathTreeNode });
   return (
-    <div className={styles.noSelect}>
-      <TreeUI
-        paddingLeft={10}
-        tree={pathTreeNode}
-        renderNode={Tab}
-        draggable={false}
-      />
+    <div className={styles.container}>
+      <div className={styles.pathDisplay}>
+        <div className={styles.label}>FILTER APPLIED</div>
+        <div className={styles.content}>
+          {props.selectedPath ||
+            "None (all facts are included in visualization)"}
+        </div>
+      </div>
+      <div className={styles.noSelect}>
+        <TreeUI
+          paddingLeft={10}
+          tree={pathTreeNode}
+          renderNode={Tab}
+          draggable={false}
+        />
+      </div>
     </div>
   );
 }
 
 function mapStateToProps(state: any) {
   return {
+    selectedPath: state.selectedPath,
     relationGraph: state.relationGraph,
   };
 }

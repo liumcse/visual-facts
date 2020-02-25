@@ -6,12 +6,7 @@ import CommitList from "./CommitList";
 import CommitInfoBox from "./CommitInfoBox";
 import { updateRelationGraph } from "../redux/actions";
 
-import {
-  RelationGraph,
-  Relation,
-  Entity,
-  EntityTrie,
-} from "@root/libs/dataStructures";
+import { RelationGraph, Relation, Entity } from "@root/libs/dataStructures";
 import * as parser from "@root/libs/parser";
 
 import "normalize.css";
@@ -124,13 +119,16 @@ class App extends React.Component<any, any> {
                   : null
               }
             />
-            <Toggle
-              className={styles.tempButton}
-              checked={displayVisualization}
-              onChange={e => {
-                this.setState({ displayVisualization: e.target.checked });
-              }}
-            />
+            <div className={styles.toggleContainer}>
+              <Toggle
+                // className={styles.tempButton}
+                checked={displayVisualization}
+                onChange={e => {
+                  this.setState({ displayVisualization: e.target.checked });
+                }}
+              />
+              <div className={styles.toggleLabel}>Display relation</div>
+            </div>
             <PathTree />
           </div>
         </div>

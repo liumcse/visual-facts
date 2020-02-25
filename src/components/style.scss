@@ -23,10 +23,16 @@
 
   .rightPane {
     flex: 3;
-    overflow: scroll;
+    overflow-y: scroll;
   }
 
-  .tempButton {
+  .toggleContainer {
     margin: 1rem;
+    display: flex;
+    align-items: center;
+
+    .toggleLabel {
+      margin-left: 0.5rem;
+    }
   }
 }
