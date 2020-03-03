@@ -10,6 +10,7 @@ import { RelationGraph, Relation, Entity } from "@root/libs/dataStructures";
 import * as parser from "@root/libs/parser";
 
 import "normalize.css";
+import "./react-vis.style.scss";
 import "./react-toggle.style.scss";
 import * as styles from "./style.scss";
 
@@ -22,14 +23,35 @@ import PathTree from "./PathTree";
 import { connect } from "react-redux";
 
 function createRelationGraph() {
+  // TODO: complete the list
+  const ignoreSet = new Set([
+    "char[]",
+    "int[]",
+    "string[]",
+    "double[]",
+    "float[]",
+  ]);
   const graph = new RelationGraph();
   // TODO: get path from parameter
   const factTuples = parser.loadFactTuple(
     "/Users/ming/Desktop/FYP/app/src/dummyData/dep-csv.ta",
   );
   for (const factTuple of factTuples) {
-    if (!factTuple) continue;
+    if (!factTuple) {
+      continue;
+    }
     const parsed = parser.parseFactTuple(factTuple);
+    // Ignore weird entities
+    if (
+      parsed.from.includes("$") ||
+      parsed.to.includes("$") ||
+      parsed.from.includes("static {...}") ||
+      parsed.to.includes("static {...}") ||
+      ignoreSet.has(parsed.from) ||
+      ignoreSet.has(parsed.to)
+    ) {
+      continue;
+    }
     // Add to graph
     graph.addRelation(
       new Relation(
@@ -101,7 +123,7 @@ class App extends React.Component<any, any> {
           />
         </div>
         <div className={styles.lowerContainer}>
-          <div className={styles.leftPane}>
+          <div className={styles.leftPane} id="leftPane">
             {displayVisualization ? (
               <Visualization />
             ) : (
