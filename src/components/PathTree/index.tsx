@@ -22,6 +22,11 @@ type TreeNode = {
   isEntity?: boolean;
   entityType?: EntityType | null;
   children: TreeNode[];
+  flags: {
+    inserted?: boolean;
+    deleted?: boolean;
+    updated?: boolean;
+  };
 };
 
 function convertTrieToPathTreeNode(trie: EntityTrie) {
@@ -31,6 +36,7 @@ function convertTrieToPathTreeNode(trie: EntityTrie) {
     isEntity: false,
     entityType: null,
     children: [],
+    flags: {},
   };
 
   function helper(node: TreeNode) {
@@ -43,6 +49,7 @@ function convertTrieToPathTreeNode(trie: EntityTrie) {
         isEntity: !!entity.entityType,
         entityType: entity.entityType,
         children: [],
+        flags: entity.flags,
       };
       helper(newTreeNode);
       node.children.push(newTreeNode);
@@ -50,6 +57,7 @@ function convertTrieToPathTreeNode(trie: EntityTrie) {
     return node;
   }
 
+  console.log(root);
   return helper(root);
 }
 
@@ -71,9 +79,19 @@ function PathTree(props: Props) {
       }
     }
 
+    function mapFlagToClassName(flags) {
+      if (flags.inserted) return "flagInserted";
+      if (flags.deleted) return "flagDeleted";
+      return "";
+    }
+
     return (
       <span
-        className={styles.tab}
+        className={styles.tab.concat(
+          mapFlagToClassName(node.flags)
+            ? " " + styles[mapFlagToClassName(node.flags)]
+            : "",
+        )}
         onClick={() => {
           if (!node.entityType) {
             alert("Invalid path. Path must lead to an entity!");
@@ -111,12 +129,7 @@ function PathTree(props: Props) {
         </div>
       </div>
       <div className={styles.noSelect}>
-        <TreeUI
-          paddingLeft={10}
-          tree={pathTreeNode}
-          renderNode={Tab}
-          draggable={false}
-        />
+        <TreeUI paddingLeft={10} tree={pathTreeNode} renderNode={Tab} />
       </div>
     </div>
   );
@@ -126,6 +139,8 @@ function mapStateToProps(state: any) {
   return {
     selectedPath: state.selectedPath,
     relationGraph: state.relationGraph,
+    diff: state.diff,
+    showDiff: state.showDiff,
   };
 }
 

@@ -4,10 +4,14 @@ import Visualization from "./Visualization";
 import GitSelection from "@root/components/GitSelection/index";
 import CommitList from "./CommitList";
 import CommitInfoBox from "./CommitInfoBox";
-import { updateRelationGraph } from "../redux/actions";
+import {
+  updateRelationGraph,
+  updateEntityTypeFilter,
+  toggleShowDiff,
+  updateDiff,
+} from "../redux/actions";
 
-import { RelationGraph, Relation, Entity } from "@root/libs/dataStructures";
-import * as parser from "@root/libs/parser";
+import { RelationGraph, Diff } from "@root/libs/dataStructures";
 
 import "normalize.css";
 import "./react-vis.style.scss";
@@ -21,48 +25,6 @@ import {
 } from "@root/libs/gitOperations";
 import PathTree from "./PathTree";
 import { connect } from "react-redux";
-
-function createRelationGraph() {
-  // TODO: complete the list
-  const ignoreSet = new Set([
-    "char[]",
-    "int[]",
-    "string[]",
-    "double[]",
-    "float[]",
-  ]);
-  const graph = new RelationGraph();
-  // TODO: get path from parameter
-  const factTuples = parser.loadFactTuple(
-    "/Users/ming/Desktop/FYP/app/src/dummyData/dep-csv.ta",
-  );
-  for (const factTuple of factTuples) {
-    if (!factTuple) {
-      continue;
-    }
-    const parsed = parser.parseFactTuple(factTuple);
-    // Ignore weird entities
-    if (
-      parsed.from.includes("$") ||
-      parsed.to.includes("$") ||
-      parsed.from.includes("static {...}") ||
-      parsed.to.includes("static {...}") ||
-      ignoreSet.has(parsed.from) ||
-      ignoreSet.has(parsed.to)
-    ) {
-      continue;
-    }
-    // Add to graph
-    graph.addRelation(
-      new Relation(
-        new Entity(parsed.from),
-        new Entity(parsed.to),
-        parsed.relationType,
-      ),
-    );
-  }
-  return graph;
-}
 
 class App extends React.Component<any, any> {
   constructor(props: any) {
@@ -90,12 +52,19 @@ class App extends React.Component<any, any> {
   };
 
   async componentDidMount() {
-    const repo = await loadRepo("/Users/ming/Desktop/FYP/commons-csv/.git");
+    const repo = await loadRepo("/Users/ming/Desktop/MOBLIMA/.git");
     const remoteBranches = await loadBranches(repo);
     await this.setStateAsync({ repo, remoteBranches });
     await this.loadCommitHistory(remoteBranches[0]);
-    this.props.updateRelationGraph(createRelationGraph());
-    console.log("Graph is created and stored in redux");
+    this.props.updateRelationGraph(
+      RelationGraph.createGraphFromFactsTupleFile(
+        "/Users/ming/Desktop/FYP/app/src/dummyData/dep-csv.ta",
+      ),
+    );
+  }
+
+  componentDidUpdate() {
+    console.log(this.props.entityTypeFilter);
   }
 
   handleButtonClick = () => {
@@ -104,6 +73,10 @@ class App extends React.Component<any, any> {
 
   handleCommitTabClick = (index: number) => {
     this.setState({ selectedCommitIndex: index });
+  };
+
+  handleCheckboxClick = (e: any) => {
+    this.props.updateEntityTypeFilter(e.target.name.split("-")[1]);
   };
 
   render() {
@@ -143,13 +116,63 @@ class App extends React.Component<any, any> {
             />
             <div className={styles.toggleContainer}>
               <Toggle
-                // className={styles.tempButton}
                 checked={displayVisualization}
                 onChange={e => {
                   this.setState({ displayVisualization: e.target.checked });
                 }}
               />
               <div className={styles.toggleLabel}>Display relation</div>
+              <button
+                onClick={() => {
+                  // Toggle showDiff
+                  this.props.toggleShowDiff(!this.props.showDiff);
+                  if (this.props.diff) return;
+                  // Create and update diff
+                  const oldGraph = RelationGraph.createGraphFromFactsTupleFile(
+                    "/Users/ming/Desktop/FYP/app/src/dummyData/dep-csv-old.ta",
+                  );
+                  const diff = RelationGraph.diff(
+                    oldGraph,
+                    this.props.relationGraph,
+                  );
+                  // Update relation graph
+                  const newGraph: RelationGraph = Object.assign(
+                    new RelationGraph(),
+                    this.props.relationGraph,
+                  );
+                  newGraph.applyDiff(diff);
+                  this.props.updateRelationGraph(newGraph);
+                  this.props.updateDiff(diff);
+                }}
+              >
+                Show Diff
+              </button>
+            </div>
+            <div className={styles.filterContainer}>
+              <input
+                type="checkbox"
+                value="class"
+                name="checkbox-class"
+                checked={this.props.entityTypeFilter["class"]}
+                onChange={this.handleCheckboxClick}
+              />
+              <label htmlFor="checkbox-class">class</label>
+              <input
+                type="checkbox"
+                value="function"
+                name="checkbox-function"
+                checked={this.props.entityTypeFilter["function"]}
+                onChange={this.handleCheckboxClick}
+              />
+              <label htmlFor="checkbox-function">function</label>
+              <input
+                type="checkbox"
+                value="variable"
+                name="checkbox-variable"
+                checked={this.props.entityTypeFilter["variable"]}
+                onChange={this.handleCheckboxClick}
+              />
+              <label htmlFor="checkbox-variable">variable</label>
             </div>
             <PathTree />
           </div>
@@ -160,13 +183,23 @@ class App extends React.Component<any, any> {
 }
 
 function mapStateToProps(state: any) {
-  return {};
+  return {
+    relationGraph: state.relationGraph,
+    entityTypeFilter: state.entityTypeFilter,
+    showDiff: state.showDiff,
+    diff: state.diff,
+  };
 }
 
 function mapDispatchToProps(dispatch: Function) {
   return {
     updateRelationGraph: (graph: RelationGraph) =>
       dispatch(updateRelationGraph(graph)),
+    updateEntityTypeFilter: (
+      entityTypeFilter: "class" | "variable" | "function",
+    ) => dispatch(updateEntityTypeFilter(entityTypeFilter)),
+    toggleShowDiff: (toggle: boolean) => dispatch(toggleShowDiff(toggle)),
+    updateDiff: (diff: Diff) => dispatch(updateDiff(diff)),
   };
 }
 

@@ -5,6 +5,15 @@
 
   .tab {
     white-space: nowrap;
+    padding: 0.25rem;
+  }
+
+  .flagInserted {
+    background-color: #19ab273b;
+  }
+
+  .flagDeleted {
+    background-color: #ff00003b;
   }
 
   .noSelect {
@@ -49,15 +58,21 @@
     background-color: #21252B;
   }
 
+  // .m-node {
+  //   padding: 0.25rem;
+  // }
+
   .m-node.placeholder {
     border: 1px dashed #1385e5;
   }
 
   .m-node .inner {
-    color: #9DA5B4;
+    color: black;
     font-size: 12px;
     font-family: Menlo;
     cursor: pointer;
+    padding: 0.25rem;
+    margin: 0.25rem;
 
     &:hover {
       background-color: rgba(196, 196, 196, 0.404);

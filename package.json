@@ -80,6 +80,7 @@
     "@emotion/styled": "^10.0.27",
     "@hot-loader/react-dom": "^16.11.0",
     "@projectstorm/react-diagrams": "^6.0.1-beta.7",
+    "add": "^2.0.6",
     "closest": "^0.0.1",
     "d3": "^5.15.0",
     "d3-force": "^2.0.1",
@@ -104,10 +105,12 @@
     "react-router-dom": "^5.1.2",
     "react-select": "^3.0.8",
     "react-toggle": "^4.1.1",
+    "react-tooltip": "^4.1.0",
     "react-ui-tree": "^4.0.0",
     "react-vis": "^1.11.7",
     "redux": "^4.0.5",
-    "url-loader": "^3.0.0"
+    "url-loader": "^3.0.0",
+    "yarn": "^1.22.0"
   },
   "devDependencies": {
     "@babel/plugin-proposal-class-properties": "^7.8.3",

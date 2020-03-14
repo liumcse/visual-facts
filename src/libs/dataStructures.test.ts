@@ -87,4 +87,50 @@ describe("RelationGraph", () => {
       expect(map.get(entity)).toBeDefined();
     }
   });
+
+  it("should be able to create relation graph from facts tuple file", () => {
+    const createdGraph = RelationGraph.createGraphFromFactsTupleFile(
+      "/Users/ming/Desktop/FYP/app/src/dummyData/dep-csv.ta",
+    );
+    expect(createdGraph).toBeInstanceOf(RelationGraph);
+  });
+
+  it("should be able to call diff", () => {
+    const oldGraph = RelationGraph.createGraphFromFactsTupleFile(
+      "/Users/ming/Desktop/FYP/app/src/dummyData/dep-moblima-old.ta",
+    );
+    const newGraph = RelationGraph.createGraphFromFactsTupleFile(
+      "/Users/ming/Desktop/FYP/app/src/dummyData/dep-moblima.ta",
+    );
+    const diff = RelationGraph.diff(oldGraph, newGraph);
+    expect(diff).toBeTruthy();
+  });
+
+  it("all of inserted inserted entities in Diff should be present in the new relation graph", () => {
+    const oldGraph = RelationGraph.createGraphFromFactsTupleFile(
+      "/Users/ming/Desktop/FYP/app/src/dummyData/dep-moblima-old.ta",
+    );
+    const newGraph = RelationGraph.createGraphFromFactsTupleFile(
+      "/Users/ming/Desktop/FYP/app/src/dummyData/dep-moblima.ta",
+    );
+    const diff = RelationGraph.diff(oldGraph, newGraph);
+    const { insertion } = diff;
+    for (const entity of insertion) {
+      expect(newGraph.findEntity(entity)).toBeDefined();
+    }
+  });
+
+  it("none of deleted entities in Diff should be present in the new relation graph", () => {
+    const oldGraph = RelationGraph.createGraphFromFactsTupleFile(
+      "/Users/ming/Desktop/FYP/app/src/dummyData/dep-moblima-old.ta",
+    );
+    const newGraph = RelationGraph.createGraphFromFactsTupleFile(
+      "/Users/ming/Desktop/FYP/app/src/dummyData/dep-moblima.ta",
+    );
+    const diff = RelationGraph.diff(oldGraph, newGraph);
+    const { deletion } = diff;
+    for (const entity of deletion) {
+      expect(newGraph.findEntity(entity)).toBeUndefined();
+    }
+  });
 });

@@ -1,5 +1,19 @@
 import * as actionTypes from "./actionTypes";
-import { RelationGraph } from "@root/libs/dataStructures";
+import { RelationGraph, Diff } from "@root/libs/dataStructures";
+
+export function updateDiff(diff: Diff) {
+  return {
+    type: actionTypes.UPDATE_DIFF,
+    payload: diff,
+  };
+}
+
+export function toggleShowDiff(toggle: boolean) {
+  return {
+    type: actionTypes.TOGGLE_SHOW_DIFF,
+    payload: toggle,
+  };
+}
 
 export function switchBranch(branchName: string) {
   return {
@@ -19,5 +33,14 @@ export function updateSelectedPath(selectedPath: string) {
   return {
     type: actionTypes.UPDATE_SELECTED_PATH,
     payload: selectedPath,
+  };
+}
+
+export function updateEntityTypeFilter(
+  entityTypeFilter: "class" | "variable" | "function",
+) {
+  return {
+    type: actionTypes.UPDATE_ENTITY_TYPE_FILTER,
+    payload: entityTypeFilter,
   };
 }

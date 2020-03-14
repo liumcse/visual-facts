@@ -1,4 +1,15 @@
 import * as utils from "../utils";
+import * as parser from "../libs/parser";
+
+// TODO: complete the list
+const ignoreSet = new Set([
+  "char[]",
+  "int[]",
+  "string[]",
+  "double[]",
+  "float[]",
+  "long[]",
+]);
 
 export enum EntityType {
   FUNCTION = "function",
@@ -11,6 +22,11 @@ export enum RelationType {
   CONTAIN = "contain",
   CALL = "call",
 }
+
+export type Diff = {
+  deletion: Entity[];
+  insertion: Entity[];
+};
 
 /**
  * Returns the inferred entity type given the name of that entity
@@ -89,6 +105,11 @@ export class Relation {
 export class Entity {
   name: string;
   entityType: EntityType;
+  flags: {
+    inserted?: boolean;
+    deleted?: boolean;
+    updated?: boolean;
+  };
 
   /**
    * Creates a new entity
@@ -97,6 +118,33 @@ export class Entity {
   constructor(name: string) {
     this.name = name;
     this.entityType = inferEntityType(name);
+    this.flags = {
+      inserted: false,
+      deleted: false,
+      updated: false,
+    };
+  }
+
+  /**
+   * Update flags of the entity
+   * @param flags Flags to update
+   */
+  updateFlags(flags: {
+    inserted?: boolean;
+    deleted?: boolean;
+    update?: boolean;
+  }) {
+    this.flags = {
+      ...this.flags,
+      ...flags,
+    };
+  }
+
+  /**
+   * Returns flags of entity
+   */
+  getFlags() {
+    return this.flags;
   }
 
   /**
@@ -131,11 +179,78 @@ export class RelationGraph {
   private map: Map<Entity, Array<Relation>> = new Map();
   private entityTrie: EntityTrie = new EntityTrie();
 
+  static createGraphFromFactsTupleFile(pathToTuple: string) {
+    const graph = new RelationGraph();
+    // TODO: get path from parameter
+    const factTuples = parser.loadFactTuple(pathToTuple);
+    for (const factTuple of factTuples) {
+      if (!factTuple) {
+        continue;
+      }
+      const parsed = parser.parseFactTuple(factTuple);
+      // Ignore weird entities
+      if (
+        parsed.from.includes("$") ||
+        parsed.to.includes("$") ||
+        parsed.from.includes("static {...}") ||
+        parsed.to.includes("static {...}") ||
+        ignoreSet.has(parsed.from) ||
+        ignoreSet.has(parsed.to)
+      ) {
+        continue;
+      }
+      // Add to graph
+      graph.addRelation(
+        new Relation(
+          new Entity(parsed.from),
+          new Entity(parsed.to),
+          parsed.relationType,
+        ),
+      );
+    }
+    return graph;
+  }
+
+  /**
+   * Compares and return the diff of two RelationGraph
+   * @param oldGraph the old version RelationGraph
+   * @param newGraph the new version RelationGraph
+   */
+  static diff(oldGraph: RelationGraph, newGraph: RelationGraph): Diff {
+    const oldEntities = oldGraph.getAllEntities();
+    const newEntities = newGraph.getAllEntities();
+    const oldEntityMap: any = {};
+    const newEntityMap: any = {};
+    oldEntities.forEach(entity => {
+      oldEntityMap[entity.getName()] = entity;
+    });
+    newEntities.forEach(entity => {
+      newEntityMap[entity.getName()] = entity;
+    });
+    const diff: Diff = {
+      deletion: [],
+      insertion: [],
+    };
+    // Entities present in old but not in new are considered deleted
+    oldEntities.forEach(entity => {
+      if (!newEntityMap[entity.getName()]) {
+        diff.deletion.push(entity);
+      }
+    });
+    // Entities present in new but not in old are considered inserted
+    newEntities.forEach(entity => {
+      if (!oldEntityMap[entity.getName()]) {
+        diff.insertion.push(entity);
+      }
+    });
+    return diff;
+  }
+
   /**
    * Finds and returns the entity that stored in the graph; returns undefined if not found
    * @param entity Entity to be searched for
    */
-  private findEntity(entity: Entity) {
+  public findEntity(entity: Entity) {
     for (const node of this.nodes) {
       if (entity.name === node.name) return node;
     }
@@ -149,14 +264,45 @@ export class RelationGraph {
   private addEntity(entity: Entity) {
     // Make sure the entity doesn't already exist in the graph
     const existingEntity = this.findEntity(entity);
-    if (existingEntity) return existingEntity;
+    if (existingEntity) {
+      console.log("Existing entity", existingEntity);
+      return existingEntity;
+    }
     // Add to map and nodes
     // Deep copy the entity object to avoid using the old entity reference
     const newEntity = new Entity(entity.getName());
+    newEntity.updateFlags(entity.getFlags());
     this.map.set(newEntity, []);
     this.nodes.push(newEntity);
     this.entityTrie.addEntity(entity);
     return newEntity;
+  }
+
+  applyDiff(diff: Diff) {
+    console.log(this.getStats());
+    console.log(diff);
+    const { insertion, deletion } = diff;
+    // Mark insertion by finding the inserted entities within the graph
+    for (const entity of insertion) {
+      const existingEntity = this.findEntity(entity) as Entity;
+      existingEntity.updateFlags({ inserted: true });
+      this.entityTrie.updateEntity(existingEntity);
+    }
+    // For deletion, add those entities into the graph and mark them as deleted
+    for (const entity of deletion) {
+      entity.updateFlags({ deleted: true });
+      this.addEntity(entity);
+    }
+    // console.log(this.getStats());
+    // // DEBUG: find out inserted entities
+    // console.log(
+    //   "inserted",
+    //   this.nodes.filter(node => node.flags.inserted),
+    // );
+    // console.log(
+    //   "deleted",
+    //   this.nodes.filter(node => node.flags.deleted),
+    // );
   }
 
   /**
@@ -231,6 +377,11 @@ export class RelationGraph {
 type EntityTrieNode = {
   name: string;
   isEntity: boolean;
+  flags: {
+    inserted?: boolean;
+    deleted?: boolean;
+    updated?: boolean;
+  };
   entityType: EntityType | null;
   children: Map<string, EntityTrieNode>;
 };
@@ -241,7 +392,26 @@ export class EntityTrie {
     isEntity: false,
     entityType: null,
     children: new Map(),
+    flags: {},
   };
+
+  /**
+   * Updates an entity in the trie
+   * @param entity Entity to be updated
+   */
+  updateEntity(entity: Entity) {
+    const namePath = utils.convertEntityNameToPath(entity.getName());
+    let temp = this.root;
+    for (const loc of namePath) {
+      if (typeof temp.children.get(loc) === "undefined") {
+        throw new Error("Entity does not exist in trie");
+      }
+      temp = temp.children.get(loc) as EntityTrieNode;
+    }
+    temp.isEntity = true;
+    temp.entityType = entity.getEntityType();
+    temp.flags = entity.getFlags();
+  }
 
   /**
    * Adds an entity to the trie
@@ -261,11 +431,13 @@ export class EntityTrie {
         isEntity: false,
         entityType: null,
         children: new Map(),
+        flags: {},
       });
       temp = temp.children.get(loc) as EntityTrieNode;
     }
     temp.isEntity = true;
     temp.entityType = entity.getEntityType();
+    temp.flags = entity.getFlags();
   }
 
   /**
@@ -277,6 +449,7 @@ export class EntityTrie {
       return Array.from(this.root.children.values()).map(entityTrieNode => ({
         name: entityTrieNode.name,
         entityType: entityTrieNode.entityType,
+        flags: entityTrieNode.flags,
       }));
     }
     const splittedName = utils.convertEntityNameToPath(prefix);
@@ -291,6 +464,7 @@ export class EntityTrie {
     return Array.from(temp.children.values()).map(entityTrieNode => ({
       name: entityTrieNode.name,
       entityType: entityTrieNode.entityType,
+      flags: entityTrieNode.flags,
     }));
   }
 }
