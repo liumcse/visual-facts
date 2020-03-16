@@ -2,12 +2,7 @@ import * as React from "react";
 import * as styles from "./style.scss";
 import { connect } from "react-redux";
 
-import {
-  RelationGraph,
-  Entity,
-  EntityType,
-  RelationType,
-} from "@root/libs/dataStructures";
+import { RelationGraph, Entity, RelationType } from "@root/libs/dataStructures";
 
 const RADIUS = 36;
 const FONT_SIZE = 8;
@@ -18,7 +13,16 @@ type Props = {
   selectedPath: string;
 };
 
-class VisBoard extends React.Component<Props, any> {
+type State = {
+  width: number;
+  height: number;
+  scaleX: number;
+  scaleY: number;
+  entities: Entity[];
+  positionMap: any;
+};
+
+class VisBoard extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -26,6 +30,7 @@ class VisBoard extends React.Component<Props, any> {
       height: 0,
       scaleX: 1,
       scaleY: 1,
+      entities: [],
       positionMap: {},
     };
   }
@@ -35,21 +40,38 @@ class VisBoard extends React.Component<Props, any> {
     window.addEventListener("resize", this.getCanvasDimension);
     const { selectedPath, relationGraph } = this.props;
     const entities = relationGraph.getEntitiesByPrefix(selectedPath);
-    this.generatePositionMap(entities);
+    this.setState({ entities });
   }
 
-  componentDidUpdate(prevProps: Props, prevState: any) {
-    const { selectedPath, relationGraph } = this.props;
-    const entities = relationGraph.getEntitiesByPrefix(selectedPath);
+  componentDidUpdate(prevProps: Props, prevState: State) {
     if (
-      prevProps.relationGraph !== this.props.relationGraph ||
       prevProps.selectedPath !== this.props.selectedPath ||
-      prevState.width !== this.state.width ||
-      prevState.height !== this.state.height
+      prevProps.relationGraph !== this.props.relationGraph
     ) {
-      this.generatePositionMap(entities);
+      // If selectedPath or relationGraph changed
+      const { selectedPath, relationGraph } = this.props;
+      const entities = relationGraph.getEntitiesByPrefix(selectedPath);
+      this.setState({ entities });
     }
-    this.renderVisualizationFromGraph(entities);
+    if (prevState.entities !== this.state.entities) {
+      // If entities changed
+      this.setState(
+        { positionMap: this.generatePositionMap(true) },
+        this.renderVisualizationFromGraph,
+      );
+    }
+    if (prevProps.showDiff !== this.props.showDiff) {
+      // If showDiff changed, re-render
+      this.renderVisualizationFromGraph();
+    }
+    if (
+      prevState.scaleX !== this.state.scaleX ||
+      prevState.scaleY ||
+      this.state.scaleY
+    ) {
+      // If scale changed, re-render
+      this.renderVisualizationFromGraph();
+    }
   }
 
   getCanvasDimension = () => {
@@ -61,19 +83,29 @@ class VisBoard extends React.Component<Props, any> {
     });
   };
 
-  generatePositionMap(entities: Entity[]) {
+  generatePositionMap(preserveOld: boolean) {
     const canvas = document.querySelector("#vis-board") as HTMLCanvasElement;
     if (!canvas) return;
     const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
     if (!ctx) return;
     const [width, height] = [canvas.width, canvas.height];
-    const __generateRandomXY = () => {
+    const { entities } = this.state;
+    const entityNameSet = new Set(
+      entities.map((entity: Entity) => entity.getName()),
+    );
+    /**
+     * Generate XY positions randomly
+     */
+    function __generateRandomXY() {
       return [
         Math.round(Math.random() * (width - 100) + 50),
         Math.round(Math.random() * (height - 100) + 50),
       ];
-    };
+    }
+    // Bind function
+    __generateRandomXY.bind(this);
     // Initialize bitmap
+    let positionMap: any;
     const bitmap: Array<Array<number>> = [];
     for (let i = 0; i < width; i++) {
       bitmap[i] = [];
@@ -81,11 +113,49 @@ class VisBoard extends React.Component<Props, any> {
         bitmap[i][j] = 0;
       }
     }
-    const positionMap: any = {};
+    if (!preserveOld) {
+      positionMap = {};
+    } else {
+      positionMap = this.state.positionMap || {};
+      for (const entityName of Object.keys(positionMap)) {
+        // If entity in positionMap not present in current entities, discard directly
+        if (!entityNameSet.has(entityName)) {
+          delete positionMap[entityName];
+          continue;
+        }
+        const [x, y] = positionMap[entityName];
+        // If x or y is out of bound, discard directly
+        if (
+          x + RADIUS > width ||
+          x - RADIUS < 0 ||
+          y + RADIUS > height ||
+          y - RADIUS < 0
+        ) {
+          delete positionMap[entityName];
+          continue;
+        }
+        // Shed bitmap
+        for (
+          let m = Math.max(0, x - RADIUS);
+          m < Math.min(x + RADIUS, width);
+          m++
+        ) {
+          for (
+            let n = Math.max(0, y - RADIUS);
+            n < Math.min(y + RADIUS, height);
+            n++
+          ) {
+            bitmap[m][n]++;
+          }
+        }
+      }
+    }
     for (const entity of entities) {
+      // If already generated, skip
+      if (positionMap[entity.getName()]) continue;
       // Generate random x y 10 times and choose the best one
       const candidates: Array<{ x: number; y: number; score: number }> = [];
-      for (let i = 0; i < 10; i++) {
+      for (let i = 0; i < 50; i++) {
         // positionMap[entity.getName()] = __generateRandomXY();
         const [x, y] = __generateRandomXY();
         let score = 0;
@@ -100,7 +170,7 @@ class VisBoard extends React.Component<Props, any> {
             n < Math.min(y + RADIUS, height);
             n++
           ) {
-            if (bitmap[m][n]) score++;
+            if (bitmap[m][n]) score += bitmap[m][n];
           }
         }
         candidates.push({ x, y, score });
@@ -124,22 +194,25 @@ class VisBoard extends React.Component<Props, any> {
       // Add into positionMap
       positionMap[entity.getName()] = [x, y];
     }
-    console.log(positionMap);
-    this.setState({ positionMap });
+    return positionMap;
   }
 
-  renderVisualizationFromGraph(entities: Entity[]) {
+  renderVisualizationFromGraph() {
     const canvas = document.querySelector("#vis-board") as HTMLCanvasElement;
     if (!canvas) return;
     const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
     if (!ctx) return;
+    const { entities, positionMap } = this.state;
+    if (!entities || entities.length === 0) return;
+    if (!positionMap || Object.keys(positionMap).length === 0) return;
+    console.log(entities, positionMap);
     const drawn = new Set<string>();
     // a set of entity names
     const entityNameSet = new Set<string>(
-      entities.map(entity => entity.getName()),
+      entities.map((entity: Entity) => entity.getName()),
     );
     const [width, height] = [canvas.width, canvas.height];
-    const { selectedPath, relationGraph } = this.props;
+    const { selectedPath, relationGraph, showDiff } = this.props;
     ctx.scale(this.state.scaleX, this.state.scaleY);
 
     function __drawLine(
@@ -148,6 +221,7 @@ class VisBoard extends React.Component<Props, any> {
       toX: number,
       toY: number,
       lineType: RelationType,
+      color?: string,
     ) {
       const dx = toX - fromX;
       const dy = toY - fromY;
@@ -182,75 +256,69 @@ class VisBoard extends React.Component<Props, any> {
       if (lineType === RelationType.CALL) {
         ctx.lineWidth = 3;
       }
+      if (color) {
+        ctx.strokeStyle = color;
+      }
       ctx.stroke();
       ctx.restore();
+      console.log("Line drawn", showDiff);
     }
 
-    // function __drawRect(label: string, x: number, y: number) {
-    //   ctx.strokeRect(x, y, 90, 40);
-    //   // Fill text
-    //   ctx.textAlign = "center";
-    //   ctx.textBaseline = "middle";
-    //   ctx.fillText(label, x + 45, y + 20);
-    //   ctx.restore();
-    // }
-
     function __drawCircle(
-      label: string,
-      entityType: EntityType,
+      entity: Entity,
       x: number,
       y: number,
+      showDiff: boolean,
     ) {
+      const entityType = entity.getEntityType();
+      // TODO: this is buggy
+      let label = entity
+        .getName()
+        .replace(selectedPath ? selectedPath + "." : "", "");
+      if (label.length > 14) {
+        label = label.slice(0, 14) + "...";
+      }
       ctx.save();
       ctx.beginPath();
       ctx.arc(x, y, RADIUS, 0, 2 * Math.PI);
+      // If showDiff is on, color the stroke
+      if (showDiff) {
+        const flags = entity.getFlags();
+        if (flags.deleted) {
+          ctx.strokeStyle = "#FF0000";
+        }
+        if (flags.inserted) {
+          ctx.strokeStyle = "#66cc82";
+        }
+      }
       ctx.stroke();
       // Fill text
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.font = `${FONT_SIZE}px Arial`;
+      if (showDiff) {
+        const flags = entity.getFlags();
+        if (flags.deleted) {
+          ctx.fillStyle = "#FF0000";
+        }
+        if (flags.inserted) {
+          ctx.fillStyle = "#66cc82";
+        }
+      }
       ctx.fillText("<<".concat(entityType).concat(">>"), x, y - 6);
       ctx.fillText(label, x, y + 6);
       ctx.restore();
     }
 
-    // function __drawEllipse(
-    //   label: string,
-    //   entityType: EntityType,
-    //   x: number,
-    //   y: number,
-    // ) {
-    //   ctx.beginPath();
-    //   ctx.ellipse(x, y, 43, 30, 0, 0, 2 * Math.PI);
-    //   ctx.stroke();
-    //   // Fill text
-    //   ctx.textAlign = "center";
-    //   ctx.textBaseline = "middle";
-    //   ctx.fillText("<<".concat(entityType).concat(">>"), x, y - 6);
-    //   ctx.fillText(label, x, y + 6);
-    //   ctx.restore();
-    // }
-
     function drawEntity(entity: Entity, x: number, y: number) {
       const name = entity.getName();
       if (drawn.has(name)) return false;
       drawn.add(name);
-      // TODO: label is buggy
-      let label = name.replace(selectedPath ? selectedPath + "." : "", "");
-      const entityType = entity.getEntityType();
-      if (label.length > 14) {
-        label = label.slice(0, 14) + "...";
+      // If showDiff is off, hide entities with deleted flags
+      if (!showDiff && entity.getFlags().deleted) {
+        return false;
       }
-      switch (entityType) {
-        case EntityType.CLASS:
-          __drawCircle(label, entityType, x, y);
-          break;
-        case EntityType.FUNCTION:
-          __drawCircle(label, entityType, x, y);
-          break;
-        default:
-          __drawCircle(label, entityType, x, y);
-      }
+      __drawCircle(entity, x, y, showDiff);
       // Continue drawing adjacent entities
       for (const relation of relationGraph.getRelationsByEntity(entity)) {
         // Ignore relation that points to existing entities
@@ -258,9 +326,27 @@ class VisBoard extends React.Component<Props, any> {
         if (!entityNameSet.has(to.getName())) {
           continue;
         }
-        const [_x, _y] = positionMap[to.getName()];
-        if (drawEntity(to, _x, _y)) {
-          __drawLine(x, y, _x, _y, relation.getType());
+        if (!positionMap[to.getName()]) {
+          console.log(
+            "Something went wrong; no position associated with this entity!",
+          );
+          continue;
+        }
+        const [toX, toY] = positionMap[to.getName()];
+        if (drawEntity(to, toX, toY)) {
+          if (showDiff) {
+            let color;
+            if (entity.getFlags().deleted) {
+              color = "#FF0000";
+            } else if (entity.getFlags().inserted) {
+              color = "#66cc82";
+            } else {
+              color = "#000000";
+            }
+            __drawLine(x, y, toX, toY, relation.getType(), color);
+          } else {
+            __drawLine(x, y, toX, toY, relation.getType(), "#000000");
+          }
         }
       }
       return true;
@@ -270,8 +356,14 @@ class VisBoard extends React.Component<Props, any> {
     ctx.clearRect(0, 0, width, height);
 
     // Draw entities
-    const { positionMap } = this.state;
+    console.log("Entities", entities, typeof entities, Array.isArray(entities));
     for (const entity of entities) {
+      if (!positionMap[entity.getName()]) {
+        console.log(
+          "Something went wrong; no position associated with this entity!",
+        );
+        continue;
+      }
       const [x, y] = positionMap[entity.getName()];
       drawEntity(entity, x, y);
     }
