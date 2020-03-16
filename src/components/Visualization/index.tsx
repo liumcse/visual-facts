@@ -1,21 +1,11 @@
 import * as React from "react";
 
 // @ts-ignore
-import {
-  XYPlot,
-  LineSeries,
-  MarkSeries,
-  LineSeriesCanvas,
-  MarkSeriesCanvas,
-  LabelSeries,
-  LabelSeriesCanvas,
-} from "react-vis";
+import { XYPlot, LineSeries, MarkSeries } from "react-vis";
 import { forceSimulation, forceLink } from "d3-force";
 
 import {
   RelationGraph,
-  EntityTrie,
-  Relation,
   RelationType,
   EntityType,
 } from "@root/libs/dataStructures";
@@ -100,52 +90,6 @@ function generateRandomPosition(data) {
   return newData;
 }
 
-/**
- * Create the list of nodes to render.
- * @returns Array of nodes.
- */
-function generateSimulation(
-  data: any,
-  height: number,
-  width: number,
-  maxSteps: number,
-  strength: number,
-) {
-  console.log("Generating simulated positions!!!");
-  // copy the data
-  // @ts-ignore
-  const nodes = data.nodes.map(d => ({ ...d }));
-  // @ts-ignore
-  const links = data.links.map(d => ({ ...d }));
-  console.log("Pre-simulation", {
-    nodes: nodes.map(x => ({ ...x })),
-    links: links.map(x => ({ ...x })),
-  });
-  // build the simulation
-  const simulation = forceSimulation(nodes).force(
-    "link",
-    // @ts-ignore
-    forceLink().id(d => d.id),
-  );
-  // .force("charge", forceManyBody().strength(strength))
-  // .force("center", forceCenter(width * 2, height * 2))
-  // .stop();
-
-  console.log({ simulation });
-
-  // @ts-ignore
-  simulation.force("link").links(links);
-
-  // const upperBound = Math.ceil(
-  //   Math.log(simulation.alphaMin()) / Math.log(1 - simulation.alphaDecay()),
-  // );
-  // for (let i = 0; i < Math.min(maxSteps, upperBound); ++i) {
-  //   simulation.tick();
-  // }
-
-  return { nodes, links };
-}
-
 function applyFilterOnD3Data(data: any, entityTypeFilter: object) {
   const newData = { nodes: [], links: [] };
   // Filter entities
@@ -165,6 +109,7 @@ type Props = {
   relationGraph: any;
   entityTypeFilter: object;
   selectedPath?: string;
+  showDiff: boolean;
 };
 
 class Visualization extends React.Component<Props, any> {
@@ -195,18 +140,21 @@ class Visualization extends React.Component<Props, any> {
     //   2,
     // );
 
-    console.log(
-      "simulation",
-      generateSimulation(data, this.state.height, this.state.width, 50, 2),
-    );
+    // console.log(
+    //   "simulation",
+    //   generateSimulation(data, this.state.height, this.state.width, 50, 2),
+    // );
 
     this.setState({
       dataImmutable: generateRandomPosition(data),
     });
   }
 
-  componentDidUpdate(prevProps: Props, prevState: any) {
-    if (prevProps.selectedPath !== this.props.selectedPath) {
+  componentDidUpdate(prevProps: Props) {
+    if (
+      prevProps.relationGraph !== this.props.relationGraph ||
+      prevProps.selectedPath !== this.props.selectedPath
+    ) {
       console.log("Triggering component did update");
       const { relationGraph, selectedPath } = this.props;
       const data = relationGraphToD3Data(relationGraph, selectedPath);
@@ -298,6 +246,7 @@ const mapStateToProps = (state: any) => ({
   relationGraph: state.relationGraph || new RelationGraph(),
   selectedPath: state.selectedPath,
   entityTypeFilter: state.entityTypeFilter,
+  showDiff: state.showDiff,
 });
 
 export default connect(mapStateToProps)(Visualization);

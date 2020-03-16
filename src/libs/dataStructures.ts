@@ -278,11 +278,9 @@ export class RelationGraph {
     return newEntity;
   }
 
-  applyDiff(diff: Diff) {
-    console.log(this.getStats());
-    console.log(diff);
+  applyDiff(diff: Diff, oldGraph: RelationGraph) {
     const { insertion, deletion } = diff;
-    // Mark insertion by finding the inserted entities within the graph
+    // Mark insertion by finding the inserted entities within the graph and trie
     for (const entity of insertion) {
       const existingEntity = this.findEntity(entity) as Entity;
       existingEntity.updateFlags({ inserted: true });
@@ -292,6 +290,20 @@ export class RelationGraph {
     for (const entity of deletion) {
       entity.updateFlags({ deleted: true });
       this.addEntity(entity);
+    }
+    // Add deleted relation edge from the oldGraph
+    const relations = oldGraph.getAllRelations().filter(relation => {
+      const deletedEntityNameSet = new Set(
+        deletion.map(entity => entity.getName()),
+      );
+      return (
+        deletedEntityNameSet.has(relation.getFrom().getName()) ||
+        deletedEntityNameSet.has(relation.getTo().getName())
+      );
+    });
+    console.log("relations", relations);
+    for (const relation of relations) {
+      this.addRelation(relation);
     }
     // console.log(this.getStats());
     // // DEBUG: find out inserted entities
@@ -318,6 +330,7 @@ export class RelationGraph {
     // Add to map and relations
     (this.map.get(from) as Array<Relation>).push(newRelation);
     this.relations.push(newRelation);
+    console.log("Added relation!");
   }
 
   /**

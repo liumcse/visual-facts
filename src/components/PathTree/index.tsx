@@ -14,6 +14,7 @@ type Props = {
   selectedPath?: string;
   relationGraph: RelationGraph;
   updateSelectedPath: Function;
+  showDiff: boolean;
 };
 
 type TreeNode = {
@@ -29,7 +30,7 @@ type TreeNode = {
   };
 };
 
-function convertTrieToPathTreeNode(trie: EntityTrie) {
+function convertTrieToPathTreeNode(trie: EntityTrie, ignoreDiff: boolean) {
   const root = {
     label: "",
     path: "",
@@ -43,6 +44,10 @@ function convertTrieToPathTreeNode(trie: EntityTrie) {
     const prefix = node.path;
     const entities = trie.listEntitiesUnderPrefix(prefix);
     for (const entity of entities) {
+      if (ignoreDiff && entity.flags.deleted) {
+        // if ignore diff, deleted entities will not be added
+        continue;
+      }
       const newTreeNode = {
         label: entity.name,
         path: node.path + "." + entity.name,
@@ -64,7 +69,6 @@ function convertTrieToPathTreeNode(trie: EntityTrie) {
 function PathTree(props: Props) {
   function handleClick(selectedPath: string) {
     props.updateSelectedPath(selectedPath);
-    console.log("updated to", selectedPath);
   }
 
   function Tab(node: TreeNode) {
@@ -79,17 +83,25 @@ function PathTree(props: Props) {
       }
     }
 
-    function mapFlagToClassName(flags) {
+    function mapFlagToClassName(flags: {
+      inserted?: boolean;
+      deleted?: boolean;
+      updated?: boolean;
+    }) {
       if (flags.inserted) return "flagInserted";
       if (flags.deleted) return "flagDeleted";
       return "";
     }
 
+    if (!node.label) return;
+
     return (
       <span
         className={styles.tab.concat(
-          mapFlagToClassName(node.flags)
-            ? " " + styles[mapFlagToClassName(node.flags)]
+          showDiff
+            ? mapFlagToClassName(node.flags)
+              ? " " + styles[mapFlagToClassName(node.flags)]
+              : ""
             : "",
         )}
         onClick={() => {
@@ -113,12 +125,12 @@ function PathTree(props: Props) {
     );
   }
 
-  const { relationGraph } = props;
+  const { relationGraph, showDiff } = props;
   if (!relationGraph) {
     return <div style={{ padding: " 0 1rem 1rem 1rem" }}>Initializing</div>;
   }
   const trie = relationGraph.getTrie();
-  const pathTreeNode = convertTrieToPathTreeNode(trie);
+  const pathTreeNode = convertTrieToPathTreeNode(trie, !showDiff);
   return (
     <div className={styles.container}>
       <div className={styles.pathDisplay}>

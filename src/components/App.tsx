@@ -25,6 +25,7 @@ import {
 } from "@root/libs/gitOperations";
 import PathTree from "./PathTree";
 import { connect } from "react-redux";
+import VisBoard from "./VisBoard";
 
 class App extends React.Component<any, any> {
   constructor(props: any) {
@@ -58,9 +59,16 @@ class App extends React.Component<any, any> {
     await this.loadCommitHistory(remoteBranches[0]);
     this.props.updateRelationGraph(
       RelationGraph.createGraphFromFactsTupleFile(
-        "/Users/ming/Desktop/FYP/app/src/dummyData/dep-csv.ta",
+        "/Users/ming/Desktop/FYP/app/src/dummyData/dep-moblima.ta",
       ),
     );
+    // TODO: delete later
+    document.addEventListener("keydown", event => {
+      if (event.keyCode === 68) {
+        console.log("Pressed D");
+        this.__handleShowDiff();
+      }
+    });
   }
 
   componentDidUpdate() {
@@ -78,6 +86,26 @@ class App extends React.Component<any, any> {
   handleCheckboxClick = (e: any) => {
     this.props.updateEntityTypeFilter(e.target.name.split("-")[1]);
   };
+
+  __handleShowDiff() {
+    // delete this function later
+    // Toggle showDiff
+    this.props.toggleShowDiff(!this.props.showDiff);
+    if (this.props.diff) return;
+    // Create and update diff
+    const oldGraph = RelationGraph.createGraphFromFactsTupleFile(
+      "/Users/ming/Desktop/FYP/app/src/dummyData/dep-moblima-old.ta",
+    );
+    const diff = RelationGraph.diff(oldGraph, this.props.relationGraph);
+    // Update relation graph
+    const newGraph: RelationGraph = Object.assign(
+      new RelationGraph(),
+      this.props.relationGraph,
+    );
+    newGraph.applyDiff(diff, oldGraph);
+    this.props.updateRelationGraph(newGraph);
+    this.props.updateDiff(diff);
+  }
 
   render() {
     const {
@@ -98,7 +126,8 @@ class App extends React.Component<any, any> {
         <div className={styles.lowerContainer}>
           <div className={styles.leftPane} id="leftPane">
             {displayVisualization ? (
-              <Visualization />
+              // <Visualization />
+              <VisBoard />
             ) : (
               <CommitList
                 commits={commitHistory}
@@ -122,31 +151,6 @@ class App extends React.Component<any, any> {
                 }}
               />
               <div className={styles.toggleLabel}>Display relation</div>
-              <button
-                onClick={() => {
-                  // Toggle showDiff
-                  this.props.toggleShowDiff(!this.props.showDiff);
-                  if (this.props.diff) return;
-                  // Create and update diff
-                  const oldGraph = RelationGraph.createGraphFromFactsTupleFile(
-                    "/Users/ming/Desktop/FYP/app/src/dummyData/dep-csv-old.ta",
-                  );
-                  const diff = RelationGraph.diff(
-                    oldGraph,
-                    this.props.relationGraph,
-                  );
-                  // Update relation graph
-                  const newGraph: RelationGraph = Object.assign(
-                    new RelationGraph(),
-                    this.props.relationGraph,
-                  );
-                  newGraph.applyDiff(diff);
-                  this.props.updateRelationGraph(newGraph);
-                  this.props.updateDiff(diff);
-                }}
-              >
-                Show Diff
-              </button>
             </div>
             <div className={styles.filterContainer}>
               <input

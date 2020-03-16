@@ -15,10 +15,11 @@
   }
 
   .leftPane {
+    position: relative;
     flex: 5;
     border-right: 1px solid #b4b4b4;
     overflow-y: scroll;
-    padding: 0.5rem 0 0.5rem 0;
+    // padding: 0.5rem 0 0.5rem 0;
   }
 
   .rightPane {

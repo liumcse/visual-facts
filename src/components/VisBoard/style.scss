@@ -1,0 +1,26 @@
+:local {
+  .container {
+    position: relative;
+    background-color: #80808024;
+    overflow: scroll;
+    height: 100%;
+    width: 100%;
+  }
+
+  .canvas {
+    position: absolute;
+  }
+
+  .zoomOut {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+  }
+
+  .zoomIn {
+    position: fixed;
+    left: 2rem;
+    bottom: 0;
+  }
+
+}
