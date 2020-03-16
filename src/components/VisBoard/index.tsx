@@ -2,15 +2,25 @@ import * as React from "react";
 import * as styles from "./style.scss";
 import { connect } from "react-redux";
 
-import { RelationGraph, Entity, RelationType } from "@root/libs/dataStructures";
+import {
+  RelationGraph,
+  Entity,
+  RelationType,
+  Relation,
+} from "@root/libs/dataStructures";
 
 const RADIUS = 36;
+const OFFSET = 20;
 const FONT_SIZE = 8;
+const RED = "#FF0000";
+const GREEN = "#269e1b";
+const BLACK = "#000000";
 
 type Props = {
   showDiff: boolean;
   relationGraph: RelationGraph;
   selectedPath: string;
+  entityTypeFilter: { class: boolean; function: boolean; variable: boolean };
 };
 
 type State = {
@@ -136,13 +146,13 @@ class VisBoard extends React.Component<Props, State> {
         }
         // Shed bitmap
         for (
-          let m = Math.max(0, x - RADIUS);
-          m < Math.min(x + RADIUS, width);
+          let m = Math.max(0, x - RADIUS - OFFSET);
+          m < Math.min(x + RADIUS + OFFSET, width);
           m++
         ) {
           for (
-            let n = Math.max(0, y - RADIUS);
-            n < Math.min(y + RADIUS, height);
+            let n = Math.max(0, y - RADIUS - OFFSET);
+            n < Math.min(y + RADIUS + OFFSET, height);
             n++
           ) {
             bitmap[m][n]++;
@@ -154,38 +164,47 @@ class VisBoard extends React.Component<Props, State> {
       // If already generated, skip
       if (positionMap[entity.getName()]) continue;
       // Generate random x y 10 times and choose the best one
-      const candidates: Array<{ x: number; y: number; score: number }> = [];
-      for (let i = 0; i < 50; i++) {
+      const candidates: Array<{
+        x: number;
+        y: number;
+        score: number;
+        distToCenter: number;
+      }> = [];
+      for (let i = 0; i < 30; i++) {
         // positionMap[entity.getName()] = __generateRandomXY();
         const [x, y] = __generateRandomXY();
         let score = 0;
         // Calculate score by counting how much bitmap is covered
         for (
-          let m = Math.max(0, x - RADIUS);
-          m < Math.min(x + RADIUS, width);
+          let m = Math.max(0, x - RADIUS - OFFSET);
+          m < Math.min(x + RADIUS + OFFSET, width);
           m++
         ) {
           for (
-            let n = Math.max(0, y - RADIUS);
-            n < Math.min(y + RADIUS, height);
+            let n = Math.max(0, y - RADIUS - OFFSET);
+            n < Math.min(y + RADIUS + OFFSET, height);
             n++
           ) {
             if (bitmap[m][n]) score += bitmap[m][n];
           }
         }
-        candidates.push({ x, y, score });
+        // Calculate the distance to center
+        const distToCenter = (x - width / 2) ** 2 + (y - height / 2) ** 2;
+        candidates.push({ x, y, score, distToCenter });
       }
       // Find the best candidate
-      const { x, y } = candidates.sort((a, b) => a.score - b.score)[0];
+      const { x, y } = candidates.sort(
+        (a, b) => a.score - b.score || a.distToCenter - b.distToCenter,
+      )[0];
       // Shed bitmap
       for (
-        let m = Math.max(0, x - RADIUS);
-        m < Math.min(x + RADIUS, width);
+        let m = Math.max(0, x - RADIUS - OFFSET);
+        m < Math.min(x + RADIUS + OFFSET, width);
         m++
       ) {
         for (
-          let n = Math.max(0, y - RADIUS);
-          n < Math.min(y + RADIUS, height);
+          let n = Math.max(0, y - RADIUS - OFFSET);
+          n < Math.min(y + RADIUS + OFFSET, height);
           n++
         ) {
           bitmap[m][n]++;
@@ -203,16 +222,24 @@ class VisBoard extends React.Component<Props, State> {
     const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
     if (!ctx) return;
     const { entities, positionMap } = this.state;
+    const {
+      selectedPath,
+      relationGraph,
+      showDiff,
+      entityTypeFilter,
+    } = this.props;
     if (!entities || entities.length === 0) return;
     if (!positionMap || Object.keys(positionMap).length === 0) return;
-    console.log(entities, positionMap);
     const drawn = new Set<string>();
+    // Filter entities
+    const entitiesFiltered = entities.filter(
+      (entity: Entity) => entityTypeFilter[entity.getEntityType()],
+    );
     // a set of entity names
     const entityNameSet = new Set<string>(
-      entities.map((entity: Entity) => entity.getName()),
+      entitiesFiltered.map((entity: Entity) => entity.getName()),
     );
     const [width, height] = [canvas.width, canvas.height];
-    const { selectedPath, relationGraph, showDiff } = this.props;
     ctx.scale(this.state.scaleX, this.state.scaleY);
 
     function __drawLine(
@@ -241,9 +268,21 @@ class VisBoard extends React.Component<Props, State> {
         toY -= RADIUS * Math.abs(Math.sin(angle));
       }
       ctx.save();
+      // Draw path
       ctx.beginPath();
+      if (color) {
+        ctx.strokeStyle = color;
+      }
+      if (lineType === RelationType.CALL) {
+        ctx.setLineDash([5, 5]);
+      }
       ctx.moveTo(fromX, fromY);
       ctx.lineTo(toX, toY);
+      ctx.stroke();
+      // Draw arrow head
+      ctx.beginPath();
+      ctx.moveTo(toX, toY);
+      ctx.setLineDash([]);
       ctx.lineTo(
         toX - 10 * Math.cos(angle - Math.PI / 6),
         toY - 10 * Math.sin(angle - Math.PI / 6),
@@ -253,9 +292,19 @@ class VisBoard extends React.Component<Props, State> {
         toX - 10 * Math.cos(angle + Math.PI / 6),
         toY - 10 * Math.sin(angle + Math.PI / 6),
       );
-      if (lineType === RelationType.CALL) {
-        ctx.lineWidth = 3;
+      if (lineType === RelationType.CONTAIN) {
+        ctx.moveTo(
+          toX - 10 * Math.cos(angle + Math.PI / 6),
+          toY - 10 * Math.sin(angle + Math.PI / 6),
+        );
+        ctx.lineTo(
+          toX - 10 * Math.cos(angle - Math.PI / 6),
+          toY - 10 * Math.sin(angle - Math.PI / 6),
+        );
       }
+      // if (lineType === RelationType.CALL) {
+      //   ctx.lineWidth = 3;
+      // }
       if (color) {
         ctx.strokeStyle = color;
       }
@@ -264,12 +313,7 @@ class VisBoard extends React.Component<Props, State> {
       console.log("Line drawn", showDiff);
     }
 
-    function __drawCircle(
-      entity: Entity,
-      x: number,
-      y: number,
-      showDiff: boolean,
-    ) {
+    function __drawCircle(entity: Entity, x: number, y: number, diff: boolean) {
       const entityType = entity.getEntityType();
       // TODO: this is buggy
       let label = entity
@@ -281,14 +325,14 @@ class VisBoard extends React.Component<Props, State> {
       ctx.save();
       ctx.beginPath();
       ctx.arc(x, y, RADIUS, 0, 2 * Math.PI);
-      // If showDiff is on, color the stroke
-      if (showDiff) {
+      // If diff is on, color the stroke
+      if (diff) {
         const flags = entity.getFlags();
         if (flags.deleted) {
-          ctx.strokeStyle = "#FF0000";
+          ctx.strokeStyle = RED;
         }
         if (flags.inserted) {
-          ctx.strokeStyle = "#66cc82";
+          ctx.strokeStyle = GREEN;
         }
       }
       ctx.stroke();
@@ -296,13 +340,13 @@ class VisBoard extends React.Component<Props, State> {
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.font = `${FONT_SIZE}px Arial`;
-      if (showDiff) {
+      if (diff) {
         const flags = entity.getFlags();
         if (flags.deleted) {
-          ctx.fillStyle = "#FF0000";
+          ctx.fillStyle = RED;
         }
         if (flags.inserted) {
-          ctx.fillStyle = "#66cc82";
+          ctx.fillStyle = GREEN;
         }
       }
       ctx.fillText("<<".concat(entityType).concat(">>"), x, y - 6);
@@ -320,7 +364,15 @@ class VisBoard extends React.Component<Props, State> {
       }
       __drawCircle(entity, x, y, showDiff);
       // Continue drawing adjacent entities
-      for (const relation of relationGraph.getRelationsByEntity(entity)) {
+      const relations = relationGraph
+        .getRelationsByEntity(entity)
+        .sort((a: Relation, b: Relation) => {
+          return (
+            relationGraph.getRelationsByEntity(b.getTo()).length -
+            relationGraph.getRelationsByEntity(a.getTo()).length
+          );
+        });
+      for (const relation of relations) {
         // Ignore relation that points to existing entities
         const to = relation.getTo();
         if (!entityNameSet.has(to.getName())) {
@@ -336,16 +388,16 @@ class VisBoard extends React.Component<Props, State> {
         if (drawEntity(to, toX, toY)) {
           if (showDiff) {
             let color;
-            if (entity.getFlags().deleted) {
-              color = "#FF0000";
-            } else if (entity.getFlags().inserted) {
-              color = "#66cc82";
+            if (to.getFlags().deleted) {
+              color = RED;
+            } else if (to.getFlags().inserted) {
+              color = GREEN;
             } else {
-              color = "#000000";
+              color = BLACK;
             }
             __drawLine(x, y, toX, toY, relation.getType(), color);
           } else {
-            __drawLine(x, y, toX, toY, relation.getType(), "#000000");
+            __drawLine(x, y, toX, toY, relation.getType(), BLACK);
           }
         }
       }
@@ -356,8 +408,16 @@ class VisBoard extends React.Component<Props, State> {
     ctx.clearRect(0, 0, width, height);
 
     // Draw entities
-    console.log("Entities", entities, typeof entities, Array.isArray(entities));
-    for (const entity of entities) {
+    // Prioritize entities with more relations
+    const entitiesSortedByRelations = entitiesFiltered.sort(
+      (a: Entity, b: Entity) => {
+        return (
+          relationGraph.getRelationsByEntity(b).length -
+          relationGraph.getRelationsByEntity(a).length
+        );
+      },
+    );
+    for (const entity of entitiesSortedByRelations) {
       if (!positionMap[entity.getName()]) {
         console.log(
           "Something went wrong; no position associated with this entity!",
@@ -378,8 +438,8 @@ class VisBoard extends React.Component<Props, State> {
         <canvas
           id="vis-board"
           className={styles.canvas}
-          height={height * this.state.scaleX || 0}
-          width={width * this.state.scaleY || 0}
+          height={height * this.state.scaleX || 0 + "px"}
+          width={width * this.state.scaleY || 0 + "px"}
         />
         <button
           className={styles.zoomOut}
