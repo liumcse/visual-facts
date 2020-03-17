@@ -59,7 +59,7 @@ class App extends React.Component<any, any> {
     await this.loadCommitHistory(remoteBranches[0]);
     this.props.updateRelationGraph(
       RelationGraph.createGraphFromFactsTupleFile(
-        "/Users/ming/Desktop/FYP/app/src/dummyData/dep-moblima.ta",
+        "/Users/ming/Desktop/FYP/app/src/dummyData/dep-csv.ta",
       ),
     );
     // TODO: delete later
@@ -94,7 +94,7 @@ class App extends React.Component<any, any> {
     if (this.props.diff) return;
     // Create and update diff
     const oldGraph = RelationGraph.createGraphFromFactsTupleFile(
-      "/Users/ming/Desktop/FYP/app/src/dummyData/dep-moblima-old.ta",
+      "/Users/ming/Desktop/FYP/app/src/dummyData/dep-csv-old.ta",
     );
     const diff = RelationGraph.diff(oldGraph, this.props.relationGraph);
     // Update relation graph
@@ -135,9 +135,11 @@ class App extends React.Component<any, any> {
                 />
               )}
             </div>
-            <div className={styles.leftLower}>
-              <StatusBar />
-            </div>
+            {displayVisualization && (
+              <div className={styles.leftLower}>
+                <StatusBar />
+              </div>
+            )}
           </div>
           <div className={styles.rightPane}>
             <CommitInfoBox

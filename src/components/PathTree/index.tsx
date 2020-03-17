@@ -94,20 +94,30 @@ function PathTree(props: Props) {
     }
 
     if (!node.label) return;
+    // Clickable if there is any non-package entity under the node
+    const clickable =
+      node.children.length > 0 &&
+      node.children.some(treeNode => treeNode.entityType);
 
     return (
       <div
         className={cx(
           styles.tab,
+          styles[(clickable && "clickable") || ""],
           styles[(showDiff && mapFlagToClassName(node.flags)) || ""],
         )}
         onMouseEnter={() => handleMouseEnterTab(node)}
         onMouseLeave={() => handleMouseLeaveTab()}
         onClick={() => {
-          if (!node.entityType) {
-            alert("Invalid path. Path must lead to an entity!");
-            return;
-          }
+          if (!clickable) return;
+          // if (!node.entityType) {
+          //   alert("Invalid path. Path must lead to an entity!");
+          //   return;
+          // }
+          // if (!node.children || node.children.length === 0) {
+          //   alert("Entities with no content must not be selected!");
+          //   return;
+          // }
           const selectedPath = node.path.slice(1);
           handleClick(selectedPath);
         }}

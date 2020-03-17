@@ -8,6 +8,7 @@ import {
   RelationType,
   Relation,
 } from "@root/libs/dataStructures";
+import { ReduxState } from "@root/redux/reducers";
 
 const RADIUS = 36;
 const OFFSET = 20;
@@ -20,6 +21,7 @@ type Props = {
   showDiff: boolean;
   relationGraph: RelationGraph;
   selectedPath: string;
+  highlightedEntityId: string;
   entityTypeFilter: { class: boolean; function: boolean; variable: boolean };
 };
 
@@ -80,6 +82,10 @@ class VisBoard extends React.Component<Props, State> {
       this.state.scaleY
     ) {
       // If scale changed, re-render
+      this.renderVisualizationFromGraph();
+    }
+    if (prevProps.highlightedEntityId !== this.props.highlightedEntityId) {
+      // If highlighted entity id changed, re-render
       this.renderVisualizationFromGraph();
     }
   }
@@ -227,6 +233,7 @@ class VisBoard extends React.Component<Props, State> {
       relationGraph,
       showDiff,
       entityTypeFilter,
+      highlightedEntityId,
     } = this.props;
     if (!entities || entities.length === 0) return;
     if (!positionMap || Object.keys(positionMap).length === 0) return;
@@ -313,7 +320,13 @@ class VisBoard extends React.Component<Props, State> {
       console.log("Line drawn", showDiff);
     }
 
-    function __drawCircle(entity: Entity, x: number, y: number, diff: boolean) {
+    function __drawCircle(
+      entity: Entity,
+      x: number,
+      y: number,
+      diff: boolean,
+      bold?: boolean,
+    ) {
       const entityType = entity.getEntityType();
       // TODO: this is buggy
       let label = entity
@@ -334,6 +347,9 @@ class VisBoard extends React.Component<Props, State> {
         if (flags.inserted) {
           ctx.strokeStyle = GREEN;
         }
+      }
+      if (bold) {
+        ctx.lineWidth = 3;
       }
       ctx.stroke();
       // Fill text
@@ -362,7 +378,13 @@ class VisBoard extends React.Component<Props, State> {
       if (!showDiff && entity.getFlags().deleted) {
         return false;
       }
-      __drawCircle(entity, x, y, showDiff);
+      __drawCircle(
+        entity,
+        x,
+        y,
+        showDiff,
+        highlightedEntityId === entity.getName(),
+      );
       // Continue drawing adjacent entities
       const relations = relationGraph
         .getRelationsByEntity(entity)
@@ -468,10 +490,11 @@ class VisBoard extends React.Component<Props, State> {
   }
 }
 
-const mapStateToProps = (state: any) => ({
+const mapStateToProps = (state: ReduxState) => ({
   relationGraph: state.relationGraph || new RelationGraph(),
   selectedPath: state.selectedPath,
   entityTypeFilter: state.entityTypeFilter,
+  highlightedEntityId: state.highlightedEntityId,
   showDiff: state.showDiff,
 });
 
