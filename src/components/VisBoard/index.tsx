@@ -84,8 +84,11 @@ class VisBoard extends React.Component<Props, State> {
       // If scale changed, re-render
       this.renderVisualizationFromGraph();
     }
-    if (prevProps.highlightedEntityId !== this.props.highlightedEntityId) {
-      // If highlighted entity id changed, re-render
+    if (
+      prevProps.highlightedEntityId !== this.props.highlightedEntityId &&
+      this.props.highlightedEntityId.includes(this.props.selectedPath)
+    ) {
+      // If highlighted entity id changed, and is under selected path, re-render
       this.renderVisualizationFromGraph();
     }
   }
@@ -256,6 +259,7 @@ class VisBoard extends React.Component<Props, State> {
       toY: number,
       lineType: RelationType,
       color?: string,
+      bold?: boolean,
     ) {
       const dx = toX - fromX;
       const dy = toY - fromY;
@@ -277,6 +281,9 @@ class VisBoard extends React.Component<Props, State> {
       ctx.save();
       // Draw path
       ctx.beginPath();
+      if (bold) {
+        ctx.lineWidth = 3;
+      }
       if (color) {
         ctx.strokeStyle = color;
       }
@@ -309,15 +316,14 @@ class VisBoard extends React.Component<Props, State> {
           toY - 10 * Math.sin(angle - Math.PI / 6),
         );
       }
-      // if (lineType === RelationType.CALL) {
-      //   ctx.lineWidth = 3;
-      // }
+      if (bold) {
+        ctx.lineWidth = 3;
+      }
       if (color) {
         ctx.strokeStyle = color;
       }
       ctx.stroke();
       ctx.restore();
-      console.log("Line drawn", showDiff);
     }
 
     function __drawCircle(
@@ -417,9 +423,25 @@ class VisBoard extends React.Component<Props, State> {
             } else {
               color = BLACK;
             }
-            __drawLine(x, y, toX, toY, relation.getType(), color);
+            __drawLine(
+              x,
+              y,
+              toX,
+              toY,
+              relation.getType(),
+              color,
+              highlightedEntityId === entity.getName(),
+            );
           } else {
-            __drawLine(x, y, toX, toY, relation.getType(), BLACK);
+            __drawLine(
+              x,
+              y,
+              toX,
+              toY,
+              relation.getType(),
+              BLACK,
+              highlightedEntityId === entity.getName(),
+            );
           }
         }
       }
