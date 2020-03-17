@@ -6,14 +6,19 @@ import {
   EntityTrie,
   EntityType,
 } from "@root/libs/dataStructures";
-import { updateSelectedPath } from "@root/redux/actions";
+import {
+  updateSelectedPath,
+  updateHighlightedEntityId,
+} from "@root/redux/actions";
 import * as styles from "./style.scss";
+import { cx } from "@root/utils";
 
 type Props = {
   data?: object;
   selectedPath?: string;
   relationGraph: RelationGraph;
   updateSelectedPath: Function;
+  updateHighlightedEntityId: Function;
   showDiff: boolean;
 };
 
@@ -61,16 +66,11 @@ function convertTrieToPathTreeNode(trie: EntityTrie, ignoreDiff: boolean) {
     }
     return node;
   }
-
-  console.log(root);
   return helper(root);
 }
 
 function PathTree(props: Props) {
-  function handleClick(selectedPath: string) {
-    props.updateSelectedPath(selectedPath);
-  }
-
+  // TODO: Can we refactor Tab out of PathTree?
   function Tab(node: TreeNode) {
     function entityTypeToColor(entityType: EntityType | null | undefined) {
       switch (entityType) {
@@ -96,14 +96,13 @@ function PathTree(props: Props) {
     if (!node.label) return;
 
     return (
-      <span
-        className={styles.tab.concat(
-          showDiff
-            ? mapFlagToClassName(node.flags)
-              ? " " + styles[mapFlagToClassName(node.flags)]
-              : ""
-            : "",
+      <div
+        className={cx(
+          styles.tab,
+          styles[(showDiff && mapFlagToClassName(node.flags)) || ""],
         )}
+        onMouseEnter={() => handleMouseEnterTab(node)}
+        onMouseLeave={() => handleMouseLeaveTab()}
         onClick={() => {
           if (!node.entityType) {
             alert("Invalid path. Path must lead to an entity!");
@@ -121,8 +120,22 @@ function PathTree(props: Props) {
         ) : (
           ""
         )}
-      </span>
+      </div>
     );
+  }
+
+  function handleMouseLeaveTab() {
+    props.updateHighlightedEntityId("");
+  }
+
+  function handleMouseEnterTab(node: TreeNode) {
+    if (!node.entityType) return;
+    const entityName = node.path.slice(1);
+    props.updateHighlightedEntityId(entityName);
+  }
+
+  function handleClick(selectedPath: string) {
+    props.updateSelectedPath(selectedPath);
   }
 
   const { relationGraph, showDiff } = props;
@@ -160,6 +173,8 @@ function mapDispatchToProps(dispatch: Function) {
   return {
     updateSelectedPath: (selectedPath: string) =>
       dispatch(updateSelectedPath(selectedPath)),
+    updateHighlightedEntityId: (entityId: string) =>
+      dispatch(updateHighlightedEntityId(entityId)),
   };
 }
 

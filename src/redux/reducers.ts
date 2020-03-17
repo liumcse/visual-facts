@@ -1,10 +1,26 @@
 // @ts-nocheck
 import * as actionTypes from "./actionTypes";
+import { RelationGraph, Diff } from "@root/libs/dataStructures";
 
-const initialState = {
+export type ReduxState = {
+  branch: string[];
+  relationGraph?: RelationGraph;
+  selectedPath: string;
+  highlightedEntityId: string;
+  showDiff: boolean;
+  diff?: Diff;
+  entityTypeFilter: {
+    class: boolean;
+    function: boolean;
+    variable: boolean;
+  };
+};
+
+const initialState: ReduxState = {
   branch: [],
   relationGraph: null,
   selectedPath: "",
+  highlightedEntityId: "",
   showDiff: false,
   diff: null,
   entityTypeFilter: {
@@ -14,7 +30,10 @@ const initialState = {
   },
 };
 
-export default (state = initialState, action) => {
+export default (
+  state = initialState,
+  action: { type: string; payload: any },
+): ReduxState => {
   const { type, payload } = action;
   switch (type) {
     case actionTypes.SWITCH_BRANCH:
@@ -49,6 +68,11 @@ export default (state = initialState, action) => {
       return {
         ...state,
         diff: payload,
+      };
+    case actionTypes.UPDATE_HIGHLIGHTED_ENTITY_ID:
+      return {
+        ...state,
+        highlightedEntityId: payload,
       };
     default:
       // throw new Error("Invalid action");

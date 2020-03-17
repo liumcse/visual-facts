@@ -1,0 +1,16 @@
+:local {
+  .container {
+    height: calc(100% - 1px);
+    width: 100%;
+    align-items: center;
+    border-top: 1px solid #b4b4b4;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+  }
+
+  .text {
+    padding-right: 2rem;
+    text-align: right;
+  }
+}

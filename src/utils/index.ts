@@ -4,6 +4,15 @@ export const ENTITY_TYPE = {
   VARIABLE: "variable",
 };
 
+export function cx(...classNames: string[]) {
+  classNames = classNames.filter(className => !!className); // filter out empty string
+  return classNames.join(" ");
+}
+
+/**
+ * Infer entity type from entity name
+ * @param entity Entity name from which to infer type
+ */
 export function inferEntityType(entity: string): string {
   // Test if it is a function
   if (
@@ -17,6 +26,10 @@ export function inferEntityType(entity: string): string {
   return ENTITY_TYPE.CLASS;
 }
 
+/**
+ * Convert entity name into name path
+ * @param entityName Entity name
+ */
 export function convertEntityNameToPath(entityName: string) {
   // TODO: this function has problems in detecting patterns like
   // org.apache.commons.csv.TokenMatchers.hasType(Token.Type)

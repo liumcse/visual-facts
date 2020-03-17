@@ -1,6 +1,5 @@
 import * as React from "react";
 import Toggle from "react-toggle";
-import Visualization from "./Visualization";
 import GitSelection from "@root/components/GitSelection/index";
 import CommitList from "./CommitList";
 import CommitInfoBox from "./CommitInfoBox";
@@ -26,6 +25,7 @@ import {
 import PathTree from "./PathTree";
 import { connect } from "react-redux";
 import VisBoard from "./VisBoard";
+import StatusBar from "./StatusBar";
 
 class App extends React.Component<any, any> {
   constructor(props: any) {
@@ -124,16 +124,20 @@ class App extends React.Component<any, any> {
           />
         </div>
         <div className={styles.lowerContainer}>
-          <div className={styles.leftPane} id="leftPane">
-            {displayVisualization ? (
-              // <Visualization />
-              <VisBoard />
-            ) : (
-              <CommitList
-                commits={commitHistory}
-                handleCommitTabClick={this.handleCommitTabClick}
-              />
-            )}
+          <div className={styles.leftPane}>
+            <div className={styles.leftUpper} id="left-upper">
+              {displayVisualization ? (
+                <VisBoard />
+              ) : (
+                <CommitList
+                  commits={commitHistory}
+                  handleCommitTabClick={this.handleCommitTabClick}
+                />
+              )}
+            </div>
+            <div className={styles.leftLower}>
+              <StatusBar />
+            </div>
           </div>
           <div className={styles.rightPane}>
             <CommitInfoBox

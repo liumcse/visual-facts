@@ -85,7 +85,7 @@ class VisBoard extends React.Component<Props, State> {
   }
 
   getCanvasDimension = () => {
-    const dom = document.querySelector("#leftPane") as Element;
+    const dom = document.querySelector("#left-upper") as Element;
     const size = dom.getBoundingClientRect();
     this.setState({
       height: size.height,

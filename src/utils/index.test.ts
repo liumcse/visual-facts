@@ -1,4 +1,4 @@
-import { convertEntityNameToPath } from "./index";
+import { convertEntityNameToPath, cx } from "./index";
 
 describe("convertEntityNameToPath", () => {
   it("should convert entity name to path", () => {
@@ -13,5 +13,13 @@ describe("convertEntityNameToPath", () => {
     expect(
       entityNames.map(entityName => convertEntityNameToPath(entityName)),
     ).toEqual(goals);
+  });
+});
+
+describe("cx", () => {
+  it("should concat class names", () => {
+    expect(
+      cx("container-1", "container-2", "container-3", "", "container-5"),
+    ).toEqual("container-1 container-2 container-3 container-5");
   });
 });
