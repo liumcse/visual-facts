@@ -10,6 +10,23 @@ export function cx(...classNames: string[]) {
 }
 
 /**
+ * Test if one path is under another
+ * @param child Child path, e.g. Model.Showtime.createShowtime()
+ * @param parent Parent path, e.g. Model.showtime
+ */
+export function isChildPath(child: string, parent: string) {
+  const splitChild = child.split(".");
+  const splitParent = parent.split(".");
+  if (splitChild.length < splitParent.length) {
+    return false;
+  }
+  for (let i = 0; i < splitParent.length; i++) {
+    if (splitParent[i] !== splitChild[i]) return false;
+  }
+  return true;
+}
+
+/**
  * Infer entity type from entity name
  * @param entity Entity name from which to infer type
  */

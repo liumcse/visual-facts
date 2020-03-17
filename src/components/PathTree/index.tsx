@@ -11,7 +11,7 @@ import {
   updateHighlightedEntityId,
 } from "@root/redux/actions";
 import * as styles from "./style.scss";
-import { cx } from "@root/utils";
+import { cx, isChildPath } from "@root/utils";
 
 type Props = {
   data?: object;
@@ -103,7 +103,8 @@ function PathTree(props: Props) {
     const clickable =
       node.children.length > 0 &&
       node.children.some(treeNode => treeNode.entityType);
-    const highlight = selectedPath && node.path.slice(1).includes(selectedPath);
+    const highlight =
+      selectedPath && isChildPath(node.path.slice(1), selectedPath);
 
     console.log("selectedPath", selectedPath);
 

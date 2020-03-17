@@ -340,7 +340,7 @@ export class RelationGraph {
   getEntitiesByPrefix(prefix?: string) {
     // TODO: refactor the method by implementing a trie-like structure to speed up filtering
     if (!prefix) return this.nodes;
-    return this.nodes.filter(node => node.getName().includes(prefix));
+    return this.nodes.filter(node => utils.isChildPath(node.getName(), prefix));
   }
 
   /**

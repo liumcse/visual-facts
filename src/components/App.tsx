@@ -26,6 +26,7 @@ import PathTree from "./PathTree";
 import { connect } from "react-redux";
 import VisBoard from "./VisBoard";
 import StatusBar from "./StatusBar";
+import { ReduxState } from "@root/redux/reducers";
 
 class App extends React.Component<any, any> {
   constructor(props: any) {
@@ -71,13 +72,12 @@ class App extends React.Component<any, any> {
     });
   }
 
-  componentDidUpdate() {
-    console.log(this.props.entityTypeFilter);
+  componentDidUpdate(prevProps: any) {
+    if (prevProps.selectedPath !== this.props.selectedPath) {
+      // If selectedPath changed, clear diff
+      // this.props.updateDiff({});
+    }
   }
-
-  handleButtonClick = () => {
-    this.setState({ displayVisualization: true });
-  };
 
   handleCommitTabClick = (index: number) => {
     this.setState({ selectedCommitIndex: index });
@@ -192,11 +192,12 @@ class App extends React.Component<any, any> {
   }
 }
 
-function mapStateToProps(state: any) {
+function mapStateToProps(state: ReduxState) {
   return {
     relationGraph: state.relationGraph,
     entityTypeFilter: state.entityTypeFilter,
     showDiff: state.showDiff,
+    selectedPath: state.selectedPath,
     diff: state.diff,
   };
 }
