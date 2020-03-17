@@ -9,6 +9,11 @@
     padding: 0.25rem;
   }
 
+  .highlight {
+    border-bottom: 2px solid black;
+    padding-bottom: calc(0.25rem - 2px);
+  }
+
   .clickable {
     cursor: pointer;
   }
@@ -85,7 +90,9 @@
     &:hover {
       background-color: rgba(196, 196, 196, 0.404);
     }
+
   }
+
 
   .m-node .node {
     display: inline-block;

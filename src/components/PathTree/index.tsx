@@ -15,7 +15,7 @@ import { cx } from "@root/utils";
 
 type Props = {
   data?: object;
-  selectedPath?: string;
+  selectedPath: string;
   relationGraph: RelationGraph;
   updateSelectedPath: Function;
   updateHighlightedEntityId: Function;
@@ -34,6 +34,9 @@ type TreeNode = {
     updated?: boolean;
   };
 };
+
+// TODO: this is just awful, can we avoid the global variable?
+let selectedPath = "";
 
 function convertTrieToPathTreeNode(trie: EntityTrie, ignoreDiff: boolean) {
   const root = {
@@ -70,9 +73,11 @@ function convertTrieToPathTreeNode(trie: EntityTrie, ignoreDiff: boolean) {
 }
 
 function PathTree(props: Props) {
+  selectedPath = props.selectedPath;
+
   // TODO: Can we refactor Tab out of PathTree?
   function Tab(node: TreeNode) {
-    function entityTypeToColor(entityType: EntityType | null | undefined) {
+    function entityTypeToColor(entityType: EntityType) {
       switch (entityType) {
         case EntityType.CLASS:
           return "blue";
@@ -98,6 +103,9 @@ function PathTree(props: Props) {
     const clickable =
       node.children.length > 0 &&
       node.children.some(treeNode => treeNode.entityType);
+    const highlight = selectedPath && node.path.slice(1).includes(selectedPath);
+
+    console.log("selectedPath", selectedPath);
 
     return (
       <div
@@ -110,26 +118,20 @@ function PathTree(props: Props) {
         onMouseLeave={() => handleMouseLeaveTab()}
         onClick={() => {
           if (!clickable) return;
-          // if (!node.entityType) {
-          //   alert("Invalid path. Path must lead to an entity!");
-          //   return;
-          // }
-          // if (!node.children || node.children.length === 0) {
-          //   alert("Entities with no content must not be selected!");
-          //   return;
-          // }
-          const selectedPath = node.path.slice(1);
-          handleClick(selectedPath);
+          const nextSelectedPath = node.path.slice(1);
+          handleClick(nextSelectedPath);
         }}
       >
-        {node.label}{" "}
-        {node.entityType ? (
-          <span style={{ color: entityTypeToColor(node.entityType) }}>
-            {"<" + node.entityType + ">"}
-          </span>
-        ) : (
-          ""
-        )}
+        <span className={cx(styles[(highlight && "highlight") || ""])}>
+          {node.label}{" "}
+          {node.entityType ? (
+            <span style={{ color: entityTypeToColor(node.entityType) }}>
+              {"<" + node.entityType + ">"}
+            </span>
+          ) : (
+            ""
+          )}
+        </span>
       </div>
     );
   }
@@ -144,8 +146,8 @@ function PathTree(props: Props) {
     props.updateHighlightedEntityId(entityName);
   }
 
-  function handleClick(selectedPath: string) {
-    props.updateSelectedPath(selectedPath);
+  function handleClick(nextSelectedPath: string) {
+    props.updateSelectedPath(nextSelectedPath);
   }
 
   const { relationGraph, showDiff } = props;
