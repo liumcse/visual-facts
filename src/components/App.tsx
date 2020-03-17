@@ -1,5 +1,5 @@
 import * as React from "react";
-import Toggle from "react-toggle";
+import Toggle, { ToggleProps } from "react-toggle";
 import GitSelection from "@root/components/GitSelection/index";
 import CommitList from "./CommitList";
 import CommitInfoBox from "./CommitInfoBox";
@@ -27,6 +27,7 @@ import { connect } from "react-redux";
 import VisBoard from "./VisBoard";
 import StatusBar from "./StatusBar";
 import { ReduxState } from "@root/redux/reducers";
+import RelationControlPanel from "./RelationControlPanel";
 
 class App extends React.Component<any, any> {
   constructor(props: any) {
@@ -83,8 +84,8 @@ class App extends React.Component<any, any> {
     this.setState({ selectedCommitIndex: index });
   };
 
-  handleCheckboxClick = (e: any) => {
-    this.props.updateEntityTypeFilter(e.target.name.split("-")[1]);
+  handleToggle = (e: any) => {
+    this.setState({ displayVisualization: e.target.checked });
   };
 
   __handleShowDiff() {
@@ -149,42 +150,13 @@ class App extends React.Component<any, any> {
                   : null
               }
             />
-            <div className={styles.toggleContainer}>
-              <Toggle
-                checked={displayVisualization}
-                onChange={e => {
-                  this.setState({ displayVisualization: e.target.checked });
-                }}
-              />
-              <div className={styles.toggleLabel}>Display relation</div>
+            <RelationControlPanel
+              handleToggle={this.handleToggle}
+              displayVisualization={displayVisualization}
+            />
+            <div className={styles.pathTreeContainer}>
+              <PathTree />
             </div>
-            <div className={styles.filterContainer}>
-              <input
-                type="checkbox"
-                value="class"
-                name="checkbox-class"
-                checked={this.props.entityTypeFilter["class"]}
-                onChange={this.handleCheckboxClick}
-              />
-              <label htmlFor="checkbox-class">class</label>
-              <input
-                type="checkbox"
-                value="function"
-                name="checkbox-function"
-                checked={this.props.entityTypeFilter["function"]}
-                onChange={this.handleCheckboxClick}
-              />
-              <label htmlFor="checkbox-function">function</label>
-              <input
-                type="checkbox"
-                value="variable"
-                name="checkbox-variable"
-                checked={this.props.entityTypeFilter["variable"]}
-                onChange={this.handleCheckboxClick}
-              />
-              <label htmlFor="checkbox-variable">variable</label>
-            </div>
-            <PathTree />
           </div>
         </div>
       </div>

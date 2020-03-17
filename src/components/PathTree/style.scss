@@ -1,6 +1,7 @@
 :local {
   .container {
     // overflow: scroll;
+    margin-top: 1rem;
   }
 
   .tab {
@@ -40,19 +41,6 @@
     user-select: none;
     /* Non-prefixed version, currently
                                   supported by Chrome, Opera and Firefox */
-  }
-
-  .pathDisplay {
-    padding: 0 1rem 1rem 1rem;
-
-    .label {
-      margin-bottom: 0.5rem;
-    }
-
-    .content {
-      font-size: 0.8rem;
-      color: grey;
-    }
   }
 }
 

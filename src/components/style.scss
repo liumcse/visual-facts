@@ -37,26 +37,7 @@
     overflow-y: scroll;
   }
 
-  .toggleContainer {
-    margin: 1rem;
-    display: flex;
-    align-items: center;
-
-    .toggleLabel {
-      margin-left: 0.5rem;
-    }
-  }
-
-  .filterContainer {
-    margin-left: 1rem;
-    margin-bottom: 1rem;
-
-    input {
-      margin-right: 0.25rem;
-    }
-
-    label {
-      margin-right: 1rem;
-    }
+  .pathTreeContainer {
+    border-top: 1px solid #b4b4b4;
   }
 }

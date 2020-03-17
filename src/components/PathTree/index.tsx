@@ -158,17 +158,8 @@ function PathTree(props: Props) {
   const trie = relationGraph.getTrie();
   const pathTreeNode = convertTrieToPathTreeNode(trie, !showDiff);
   return (
-    <div className={styles.container}>
-      <div className={styles.pathDisplay}>
-        <div className={styles.label}>FILTER APPLIED</div>
-        <div className={styles.content}>
-          {props.selectedPath ||
-            "None (all facts are included in visualization)"}
-        </div>
-      </div>
-      <div className={styles.noSelect}>
-        <TreeUI paddingLeft={10} tree={pathTreeNode} renderNode={Tab} />
-      </div>
+    <div className={cx(styles.container, styles.noSelect)}>
+      <TreeUI paddingLeft={10} tree={pathTreeNode} renderNode={Tab} />
     </div>
   );
 }

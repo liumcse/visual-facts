@@ -1,0 +1,37 @@
+:local {
+  .toggleContainer {
+    margin: 1rem;
+    display: flex;
+    align-items: center;
+
+    .toggleLabel {
+      margin-left: 0.5rem;
+    }
+  }
+
+  .filterContainer {
+    margin-left: 1rem;
+    margin-bottom: 1rem;
+
+    input {
+      margin-right: 0.25rem;
+    }
+
+    label {
+      margin-right: 1rem;
+    }
+  }
+
+  .pathDisplay {
+    padding: 0 1rem 1rem 1rem;
+
+    .label {
+      margin-bottom: 0.5rem;
+    }
+
+    .content {
+      font-size: 0.8rem;
+      color: grey;
+    }
+  }
+}
