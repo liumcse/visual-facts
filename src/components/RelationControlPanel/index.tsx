@@ -26,7 +26,7 @@ class RelationControlPanel extends React.Component<Props> {
             checked={this.props.displayVisualization}
             onChange={this.props.handleToggle}
           />
-          <div className={styles.toggleLabel}>Display relation</div>
+          <div className={styles.toggleLabel}>Show Visualization</div>
         </div>
         <div className={styles.filterContainer}>
           <input

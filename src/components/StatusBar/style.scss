@@ -9,6 +9,14 @@
     justify-content: flex-end;
   }
 
+  .visView button {
+    margin-right: -0.15rem;
+
+    &:nth-child(2) {
+      margin-right: 0.25rem;
+    }
+  }
+
   .text {
     padding-right: 2rem;
     text-align: right;

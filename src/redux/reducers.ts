@@ -3,6 +3,7 @@ import * as actionTypes from "./actionTypes";
 import { RelationGraph, Diff } from "@root/libs/dataStructures";
 
 export type ReduxState = {
+  pathToRepo?: string;
   branch: string[];
   relationGraph?: RelationGraph;
   selectedPath: string;
@@ -17,6 +18,7 @@ export type ReduxState = {
 };
 
 const initialState: ReduxState = {
+  pathToRepo: null,
   branch: [],
   relationGraph: null,
   selectedPath: "",
@@ -36,6 +38,11 @@ export default (
 ): ReduxState => {
   const { type, payload } = action;
   switch (type) {
+    case actionTypes.UPDATE_PATH_TO_REPO:
+      return {
+        ...state,
+        pathToRepo: payload,
+      };
     case actionTypes.SWITCH_BRANCH:
       return {
         ...state,

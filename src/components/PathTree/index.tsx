@@ -153,13 +153,15 @@ function PathTree(props: Props) {
 
   const { relationGraph, showDiff } = props;
   if (!relationGraph) {
-    return <div style={{ padding: " 0 1rem 1rem 1rem" }}>Initializing</div>;
+    return <div className={styles.container}>Initializing</div>;
   }
   const trie = relationGraph.getTrie();
   const pathTreeNode = convertTrieToPathTreeNode(trie, !showDiff);
   return (
     <div className={cx(styles.container, styles.noSelect)}>
-      <TreeUI paddingLeft={10} tree={pathTreeNode} renderNode={Tab} />
+      <div className={styles.innerContainer}>
+        <TreeUI paddingLeft={10} tree={pathTreeNode} renderNode={Tab} />
+      </div>
     </div>
   );
 }

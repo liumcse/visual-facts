@@ -1,6 +1,13 @@
 import * as actionTypes from "./actionTypes";
 import { RelationGraph, Diff } from "@root/libs/dataStructures";
 
+export function updatePathToRepo(pathToRepo: string) {
+  return {
+    type: actionTypes.UPDATE_PATH_TO_REPO,
+    payload: pathToRepo,
+  };
+}
+
 export function updateHighlightedEntityId(entityId: string) {
   return {
     type: actionTypes.UPDATE_HIGHLIGHTED_ENTITY_ID,

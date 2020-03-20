@@ -4,6 +4,10 @@
     margin-top: 1rem;
   }
 
+  .innerContainer {
+    overflow-y: scroll;
+  }
+
   .tab {
     white-space: nowrap;
     width: 100%;
@@ -56,10 +60,6 @@
     background-color: #21252B;
   }
 
-  // .m-node {
-  //   padding: 0.25rem;
-  // }
-
   .m-node.placeholder {
     border: 1px dashed #1385e5;
   }
@@ -73,7 +73,6 @@
   .children .inner {
     cursor: default;
     padding: 0.25rem;
-    // margin: 0.25rem;
 
     &:hover {
       background-color: rgba(196, 196, 196, 0.404);

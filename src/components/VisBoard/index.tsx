@@ -49,6 +49,7 @@ class VisBoard extends React.Component<Props, State> {
 
   componentDidMount() {
     this.getCanvasDimension();
+    // Add resize event
     window.addEventListener("resize", this.getCanvasDimension);
     const { selectedPath, relationGraph } = this.props;
     const entities = relationGraph.getEntitiesByPrefix(selectedPath);

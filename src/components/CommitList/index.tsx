@@ -12,7 +12,7 @@ type Props = {
 export default function CommitList(props: Props) {
   const { commits, handleCommitTabClick } = props;
   return (
-    <div>
+    <React.Fragment>
       {commits.map((commit: Commit, index: number) => (
         <div
           className={styles.commitTab}
@@ -23,6 +23,6 @@ export default function CommitList(props: Props) {
           <div className={styles.date}>{moment(commit.date()).fromNow()}</div>
         </div>
       ))}
-    </div>
+    </React.Fragment>
   );
 }

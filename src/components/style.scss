@@ -18,26 +18,63 @@
   .leftPane {
     display: flex;
     flex-direction: column;
-    flex: 5;
+    // flex: 5;
+    width: 62.5%;
     border-right: 1px solid #b4b4b4;
-    overflow-y: scroll;
+    // overflow-y: scroll;
 
     .leftUpper {
       position: relative;
       height: 100%;
+      overflow: scroll;
     }
 
     .leftLower {
-      height: 2rem;
+      height: 2.5rem;
+      width: 100%;
+      // position: fixed;
+      // bottom: 0;
     }
   }
 
   .rightPane {
-    flex: 3;
-    overflow-y: scroll;
+    // flex: 3;
+    width: 37.5%;
   }
 
   .pathTreeContainer {
     border-top: 1px solid #b4b4b4;
+    // TODO: calculate exact max-weight
+    max-height: 100%;
+    overflow-y: scroll;
+  }
+}
+
+:global {
+  button {
+    display: inline-block;
+    cursor: pointer;
+    padding: 0.2rem 1.45rem;
+    border: 0.15rem solid #CCCCCC;
+    box-sizing: border-box;
+    text-decoration: none;
+    font-family: 'Segoe UI', 'Roboto', sans-serif;
+    font-weight: 400;
+    color: #000000;
+    background-color: #CCCCCC;
+    border-color: #7a7a7a;
+    text-align: center;
+    position: relative;
+  }
+
+  button:active {
+    background-color: #999999;
+  }
+
+  @media all and (max-width:30em) {
+    button {
+      display: block;
+      margin: 0.2rem auto;
+    }
   }
 }

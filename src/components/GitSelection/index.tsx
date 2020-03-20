@@ -1,6 +1,7 @@
 import * as React from "react";
 import { connect } from "react-redux";
-import { switchBranch } from "../../redux/actions";
+import { remote } from "electron";
+import { switchBranch, updatePathToRepo } from "../../redux/actions";
 import Select, { components } from "react-select";
 
 import * as styles from "./style.scss";
@@ -9,10 +10,32 @@ type Props = {
   branches: string[];
   loadCommitHistory: (branchName: string) => void;
   switchBranch: (branchName: string) => void;
+  updatePathToRepo: (repoName: string) => void;
 };
 
-class GitSelection extends React.Component<Props> {
+class GitSelection extends React.Component<Props, any> {
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      repoName: null,
+    };
+  }
+  handleGitFolderSelection = () => {
+    const selectedPathArr = remote.dialog.showOpenDialogSync({
+      properties: ["openDirectory"],
+    });
+    if (selectedPathArr) {
+      const selectedPath = selectedPathArr[0];
+      const splitPath = selectedPath.split("/");
+      const repoName = splitPath[splitPath.length - 1];
+      this.props.updatePathToRepo(selectedPath);
+      // this.props.switchBranch("master");
+      // this.props.loadCommitHistory("master");
+      this.setState({ repoName });
+    }
+  };
   render() {
+    const { repoName } = this.state;
     const options =
       this.props.branches &&
       this.props.branches.map((branchName: string) => ({
@@ -23,7 +46,12 @@ class GitSelection extends React.Component<Props> {
       <div className={styles.container}>
         <div className={styles.repoContainer}>
           <div className={styles.label}>repository</div>
-          <div className={styles.content}>Common-CSV</div>
+          <div
+            className={styles.content}
+            onClick={this.handleGitFolderSelection}
+          >
+            {repoName || "Select Repo"}
+          </div>
         </div>
         <div className={styles.branchContainer}>
           <div className={styles.label}>branch</div>
@@ -51,6 +79,8 @@ class GitSelection extends React.Component<Props> {
 }
 
 const mapDispatchToProps = (dispatch: Function) => ({
+  updatePathToRepo: (pathToRepo: string) =>
+    dispatch(updatePathToRepo(pathToRepo)),
   switchBranch: (branchName: string) => dispatch(switchBranch(branchName)),
 });
 

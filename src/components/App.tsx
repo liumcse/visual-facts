@@ -1,5 +1,4 @@
 import * as React from "react";
-import Toggle, { ToggleProps } from "react-toggle";
 import GitSelection from "@root/components/GitSelection/index";
 import CommitList from "./CommitList";
 import CommitInfoBox from "./CommitInfoBox";
@@ -29,8 +28,27 @@ import StatusBar from "./StatusBar";
 import { ReduxState } from "@root/redux/reducers";
 import RelationControlPanel from "./RelationControlPanel";
 
-class App extends React.Component<any, any> {
-  constructor(props: any) {
+type Props = {
+  pathToRepo: string;
+  relationGraph: RelationGraph;
+  entityTypeFilter: {
+    class: boolean;
+    variable: boolean;
+    function: boolean;
+  };
+  showDiff: boolean;
+  selectedPath: string;
+  diff: Diff;
+  updateRelationGraph: (graph: RelationGraph) => void;
+  updateEntityTypeFilter: (
+    entityTypeFilter: "class" | "variable" | "function",
+  ) => void;
+  toggleShowDiff: (toggle: boolean) => void;
+  updateDiff: (diff: Diff) => void;
+};
+
+class App extends React.Component<Props, any> {
+  constructor(props: Props) {
     super(props);
     this.state = {
       repo: null,
@@ -43,6 +61,7 @@ class App extends React.Component<any, any> {
 
   // TODO: this method is AWFUL!!! Rewrite it
   loadCommitHistory = async (branchName: string) => {
+    await this.setStateAsync({ commitHistory: [] });
     const { repo } = this.state;
     const commitHistory = await loadCommitsOfBranch(repo, branchName);
     await this.setStateAsync({ commitHistory });
@@ -55,28 +74,38 @@ class App extends React.Component<any, any> {
   };
 
   async componentDidMount() {
-    const repo = await loadRepo("/Users/ming/Desktop/MOBLIMA/.git");
+    const { pathToRepo } = this.props;
+    const repo = await loadRepo(
+      pathToRepo || "/Users/ming/Desktop/MOBLIMA/.git",
+    );
     const remoteBranches = await loadBranches(repo);
     await this.setStateAsync({ repo, remoteBranches });
     await this.loadCommitHistory(remoteBranches[0]);
     this.props.updateRelationGraph(
       RelationGraph.createGraphFromFactsTupleFile(
-        "/Users/ming/Desktop/FYP/app/src/dummyData/dep-csv.ta",
+        "/Users/ming/Desktop/FYP/app/src/dummyData/dep-moblima.ta",
       ),
     );
     // TODO: delete later
     document.addEventListener("keydown", event => {
       if (event.keyCode === 68) {
-        console.log("Pressed D");
         this.__handleShowDiff();
       }
     });
   }
 
-  componentDidUpdate(prevProps: any) {
+  async componentDidUpdate(prevProps: Props) {
     if (prevProps.selectedPath !== this.props.selectedPath) {
       // If selectedPath changed, clear diff
       // this.props.updateDiff({});
+    }
+    if (prevProps.pathToRepo !== this.props.pathToRepo) {
+      // If repo changed, pull branches and load commit history
+      const { pathToRepo } = this.props;
+      const repo = await loadRepo(pathToRepo);
+      const remoteBranches = await loadBranches(repo);
+      await this.setStateAsync({ repo, remoteBranches });
+      await this.loadCommitHistory(remoteBranches[0]);
     }
   }
 
@@ -95,7 +124,7 @@ class App extends React.Component<any, any> {
     if (this.props.diff) return;
     // Create and update diff
     const oldGraph = RelationGraph.createGraphFromFactsTupleFile(
-      "/Users/ming/Desktop/FYP/app/src/dummyData/dep-csv-old.ta",
+      "/Users/ming/Desktop/FYP/app/src/dummyData/dep-moblima-old.ta",
     );
     const diff = RelationGraph.diff(oldGraph, this.props.relationGraph);
     // Update relation graph
@@ -136,11 +165,9 @@ class App extends React.Component<any, any> {
                 />
               )}
             </div>
-            {displayVisualization && (
-              <div className={styles.leftLower}>
-                <StatusBar />
-              </div>
-            )}
+            <div className={styles.leftLower}>
+              <StatusBar visView={displayVisualization} />
+            </div>
           </div>
           <div className={styles.rightPane}>
             <CommitInfoBox
@@ -166,6 +193,7 @@ class App extends React.Component<any, any> {
 
 function mapStateToProps(state: ReduxState) {
   return {
+    pathToRepo: state.pathToRepo,
     relationGraph: state.relationGraph,
     entityTypeFilter: state.entityTypeFilter,
     showDiff: state.showDiff,
