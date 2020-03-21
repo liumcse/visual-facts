@@ -48,6 +48,7 @@ class GitSelection extends React.Component<Props, any> {
           <div className={styles.label}>repository</div>
           <div
             className={styles.content}
+            style={{ cursor: "pointer" }}
             onClick={this.handleGitFolderSelection}
           >
             {repoName || "Select Repo"}
