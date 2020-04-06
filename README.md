@@ -1,7 +1,7 @@
-# Software Facts Analyzer
+# Visual Facts
 
-To add description :)
+This repository hosts Visual Facts, a desktop application developed for my final year project at NTU.
 
-## Courtesy
+## Credits
 
 This project is bootstrapped by Electron-React-Typescript, a boilerplate for develop Electron application with React and Typescript.
