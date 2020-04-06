@@ -9,6 +9,7 @@ import {
   Relation,
 } from "@root/libs/dataStructures";
 import { ReduxState } from "@root/redux/reducers";
+import { convertEntityNameToPath } from "@root/utils";
 
 const RADIUS = 36;
 const OFFSET = 20;
@@ -335,10 +336,12 @@ class VisBoard extends React.Component<Props, State> {
       bold?: boolean,
     ) {
       const entityType = entity.getEntityType();
-      // TODO: this is buggy
-      let label = entity
-        .getName()
-        .replace(selectedPath ? selectedPath + "." : "", "");
+      let label = entity.getName();
+      if (label === selectedPath) {
+        label = convertEntityNameToPath(label).pop() || "";
+      } else {
+        label = label.replace(selectedPath ? selectedPath + "." : "", "");
+      }
       if (label.length > 14) {
         label = label.slice(0, 14) + "...";
       }
@@ -472,19 +475,22 @@ class VisBoard extends React.Component<Props, State> {
       const [x, y] = positionMap[entity.getName()];
       drawEntity(entity, x, y);
     }
-
-    console.log("Redrawn");
   }
 
   render() {
     const { height, width } = this.state;
+    const devicePixelRatio = window.devicePixelRatio;
     return (
       <div className={styles.container}>
         <canvas
           id="vis-board"
           className={styles.canvas}
-          height={height * this.state.scaleX || 0 + "px"}
-          width={width * this.state.scaleY || 0 + "px"}
+          height={height * this.state.scaleX || 0}
+          width={width * this.state.scaleY || 0}
+          style={{
+            height: height || 0,
+            width: width || 0,
+          }}
         />
         <button
           className={styles.zoomOut}

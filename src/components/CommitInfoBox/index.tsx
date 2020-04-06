@@ -1,11 +1,18 @@
 import * as React from "react";
 import moment from "moment";
-import Popup from "reactjs-popup";
 import { Commit } from "nodegit";
 
 import * as styles from "./style.scss";
 
-export default function CommitInfoBox({ commit }: { commit: Commit | null }) {
+export default function CommitInfoBox({
+  commit,
+  handleGenerateFacts,
+  enableHandleGenerateFacts,
+}: {
+  commit?: Commit;
+  handleGenerateFacts: () => void;
+  enableHandleGenerateFacts: boolean;
+}) {
   return (
     <div className={styles.container}>
       <span className={styles.noNewLine}>

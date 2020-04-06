@@ -179,6 +179,38 @@ export class RelationGraph {
   private map: Map<Entity, Array<Relation>> = new Map();
   private entityTrie: EntityTrie = new EntityTrie();
 
+  static createGraphFromFacts(facts: string) {
+    const graph = new RelationGraph();
+    // TODO: get path from parameter
+    const deps = facts.split("\n").slice(1); // Ignore the first line
+    for (const factTuple of deps) {
+      if (!factTuple) {
+        continue;
+      }
+      const parsed = parser.parseFactTuple(factTuple);
+      // Ignore weird entities
+      if (
+        parsed.from.includes("$") ||
+        parsed.to.includes("$") ||
+        parsed.from.includes("static {...}") ||
+        parsed.to.includes("static {...}") ||
+        ignoreSet.has(parsed.from) ||
+        ignoreSet.has(parsed.to)
+      ) {
+        continue;
+      }
+      // Add to graph
+      graph.addRelation(
+        new Relation(
+          new Entity(parsed.from),
+          new Entity(parsed.to),
+          parsed.relationType,
+        ),
+      );
+    }
+    return graph;
+  }
+
   static createGraphFromFactsTupleFile(pathToTuple: string) {
     const graph = new RelationGraph();
     // TODO: get path from parameter

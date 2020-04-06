@@ -9,6 +9,28 @@ export async function loadRepo(absolutePath: string) {
   return repo;
 }
 
+export async function getRepoURL(absolutePath: string) {
+  const repo = await loadRepo(absolutePath);
+  const repoConfig = await repo.config();
+  const urlBuffer = await repoConfig.getStringBuf("remote.origin.url");
+  return urlBuffer.toString();
+}
+
+export async function cloneRepo(
+  repoURL: string,
+  localPath: string,
+  branchName: string,
+) {
+  await nodegit.Clone.clone(repoURL, localPath, {
+    checkoutBranch: branchName,
+    fetchOpts: {
+      callbacks: {
+        certificateCheck: () => 0,
+      },
+    },
+  });
+}
+
 /**
  * Returns remote branches of a repository
  * @param repo Repository to load branches from

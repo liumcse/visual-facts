@@ -1,5 +1,7 @@
 import * as React from "react";
-import GitSelection from "@root/components/GitSelection/index";
+import { ToastContainer } from "react-toastify";
+import { Repository, Commit } from "nodegit";
+import GitSelection from "@root/components/GitSelection";
 import CommitList from "./CommitList";
 import CommitInfoBox from "./CommitInfoBox";
 import {
@@ -14,12 +16,14 @@ import { RelationGraph, Diff } from "@root/libs/dataStructures";
 import "normalize.css";
 import "./react-vis.style.scss";
 import "./react-toggle.style.scss";
+import "./react-toastify.scss";
 import * as styles from "./style.scss";
 
 import {
   loadRepo,
   loadBranches,
   loadCommitsOfBranch,
+  getRepoURL,
 } from "@root/libs/gitOperations";
 import PathTree from "./PathTree";
 import { connect } from "react-redux";
@@ -27,6 +31,7 @@ import VisBoard from "./VisBoard";
 import StatusBar from "./StatusBar";
 import { ReduxState } from "@root/redux/reducers";
 import RelationControlPanel from "./RelationControlPanel";
+import { getFacts } from "@root/apis";
 
 type Props = {
   pathToRepo: string;
@@ -47,14 +52,24 @@ type Props = {
   updateDiff: (diff: Diff) => void;
 };
 
-class App extends React.Component<Props, any> {
+type State = {
+  repo?: Repository;
+  commitHistory: Commit[];
+  remoteBranches: string[];
+  selectedCommitIndex?: number;
+  selectedCommitIndexToCompare?: number;
+  displayVisualization: boolean;
+};
+
+class App extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      repo: null,
+      repo: undefined,
       commitHistory: [],
       remoteBranches: [],
-      selectedCommitIndex: null,
+      selectedCommitIndex: undefined,
+      selectedCommitIndexToCompare: undefined,
       displayVisualization: false,
     };
   }
@@ -63,12 +78,13 @@ class App extends React.Component<Props, any> {
   loadCommitHistory = async (branchName: string) => {
     await this.setStateAsync({ commitHistory: [] });
     const { repo } = this.state;
+    if (!repo) return;
     const commitHistory = await loadCommitsOfBranch(repo, branchName);
     await this.setStateAsync({ commitHistory });
   };
 
   setStateAsync = (state: any) => {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       this.setState(state, resolve);
     });
   };
@@ -80,14 +96,14 @@ class App extends React.Component<Props, any> {
     );
     const remoteBranches = await loadBranches(repo);
     await this.setStateAsync({ repo, remoteBranches });
-    await this.loadCommitHistory(remoteBranches[0]);
+    await this.loadCommitHistory("refs/remotes/origin/" + remoteBranches[0]);
     this.props.updateRelationGraph(
       RelationGraph.createGraphFromFactsTupleFile(
         "/Users/ming/Desktop/FYP/app/src/dummyData/dep-moblima.ta",
       ),
     );
     // TODO: delete later
-    document.addEventListener("keydown", event => {
+    document.addEventListener("keydown", (event) => {
       if (event.keyCode === 68) {
         this.__handleShowDiff();
       }
@@ -105,9 +121,20 @@ class App extends React.Component<Props, any> {
       const repo = await loadRepo(pathToRepo);
       const remoteBranches = await loadBranches(repo);
       await this.setStateAsync({ repo, remoteBranches });
-      await this.loadCommitHistory(remoteBranches[0]);
+      await this.loadCommitHistory("refs/remotes/origin/" + remoteBranches[0]);
     }
   }
+
+  handleGenerateFacts = async () => {
+    if (!this.state.selectedCommitIndex) return;
+    const repoUrl = await getRepoURL(this.props.pathToRepo);
+    const commitHash = this.state.commitHistory[this.state.selectedCommitIndex]
+      .id()
+      .toString();
+    const facts = await getFacts(repoUrl, commitHash);
+    const newGraph = RelationGraph.createGraphFromFacts(facts);
+    this.props.updateRelationGraph(newGraph);
+  };
 
   handleCommitTabClick = (index: number) => {
     this.setState({ selectedCommitIndex: index });
@@ -121,10 +148,11 @@ class App extends React.Component<Props, any> {
     // delete this function later
     // Toggle showDiff
     this.props.toggleShowDiff(!this.props.showDiff);
-    if (this.props.diff) return;
+    console.log("Toggling show diff");
+    // if (this.props.diff) return;
     // Create and update diff
     const oldGraph = RelationGraph.createGraphFromFactsTupleFile(
-      "/Users/ming/Desktop/FYP/app/src/dummyData/dep-moblima-old.ta",
+      "/Users/ming/Desktop/FYP/app/src/dummyData/dep-csv-old.ta",
     );
     const diff = RelationGraph.diff(oldGraph, this.props.relationGraph);
     // Update relation graph
@@ -147,6 +175,7 @@ class App extends React.Component<Props, any> {
 
     return (
       <div className={styles.container}>
+        <ToastContainer autoClose={3000} closeOnClick hideProgressBar={false} />
         <div className={styles.upperContainer}>
           <GitSelection
             branches={remoteBranches}
@@ -161,20 +190,32 @@ class App extends React.Component<Props, any> {
               ) : (
                 <CommitList
                   commits={commitHistory}
+                  selected={[
+                    this.state.selectedCommitIndex,
+                    this.state.selectedCommitIndexToCompare,
+                  ]}
                   handleCommitTabClick={this.handleCommitTabClick}
                 />
               )}
             </div>
             <div className={styles.leftLower}>
-              <StatusBar visView={displayVisualization} />
+              <StatusBar
+                visView={displayVisualization}
+                handleGenerateFacts={this.handleGenerateFacts}
+              />
             </div>
           </div>
           <div className={styles.rightPane}>
             <CommitInfoBox
+              enableHandleGenerateFacts={
+                typeof this.state.selectedCommitIndex !== "undefined" &&
+                !!this.props.pathToRepo
+              }
+              handleGenerateFacts={this.handleGenerateFacts}
               commit={
-                selectedCommitIndex !== null
+                selectedCommitIndex
                   ? commitHistory[selectedCommitIndex]
-                  : null
+                  : undefined
               }
             />
             <RelationControlPanel

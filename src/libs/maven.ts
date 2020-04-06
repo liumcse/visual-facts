@@ -32,6 +32,7 @@ export function generateFactTuple(pathToClassRoot: string) {
   // TODO: generate config
   const pathToConfig = "/Users/ming/Desktop/FYP/definer/config.properties";
   const cmd = [
+    // TODO: find out what the Java path really is...
     "JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk1.8.0_231.jdk/Contents/Home",
     "M2_HOME=/Users/ming/Desktop/FYP/app/src/vendors/apache-maven-3.6.3/bin",
     JAVA,
@@ -60,5 +61,3 @@ function test() {
   const pathToSource = "/Users/ming/Desktop/FYP/commons-csv/target";
   generateFactTuple(pathToSource);
 }
-
-test();
