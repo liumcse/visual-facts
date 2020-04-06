@@ -4,4 +4,4 @@ This repository hosts Visual Facts, a desktop application developed for my final
 
 ## Credits
 
-This project is bootstrapped by Electron-React-Typescript, a boilerplate for develop Electron application with React and Typescript.
+This project was bootstrapped by Electron-React-Typescript, a boilerplate for develop Electron application with React and Typescript.
