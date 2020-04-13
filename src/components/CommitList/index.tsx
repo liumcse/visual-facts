@@ -7,23 +7,26 @@ import { cx } from "@root/utils";
 
 type Props = {
   commits: Commit[];
-  handleCommitTabClick: (index: number) => void;
-  selected: Array<number | undefined>;
+  handleCommitTabClick: (event: any, index: number) => void;
+  selected: number | undefined;
+  selectedSecondary: number | undefined;
 };
 
 export default function CommitList(props: Props) {
-  const { commits, handleCommitTabClick, selected } = props;
+  const { commits, handleCommitTabClick, selected, selectedSecondary } = props;
   return (
     <React.Fragment>
       {commits.map((commit: Commit, index: number) => {
         return (
           <div
             className={cx(
+              "noSelect",
               styles.commitTab,
-              selected.includes(index) ? styles.selected : "",
+              selected === index ? styles.selected : "",
+              selectedSecondary === index ? styles.selectedSecondary : "",
             )}
             key={index}
-            onClick={() => handleCommitTabClick(index)}
+            onClick={(event) => handleCommitTabClick(event, index)}
           >
             <div className={styles.message}>{commit.message().toString()}</div>
             <div className={styles.date}>{moment(commit.date()).fromNow()}</div>

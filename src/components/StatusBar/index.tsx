@@ -8,35 +8,66 @@ import { cx } from "@root/utils";
 type Props = {
   visView: boolean;
   highlightedEntityId?: string;
-  handleGenerateFacts: () => void;
+  handleGenerateFacts: () => Promise<void>;
+  handleGenerateDiff: () => Promise<void>;
+  enableGenerateFactsButton: boolean;
+  enableGenerateDiffButton: boolean;
 };
 
 class StatusBar extends React.PureComponent<Props, any> {
-  toastTest() {
-    toast("🦄 Generating facts...", {
-      position: "top-right",
-      autoClose: 5000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-    });
-  }
+  // toastTest() {
+  //   toast("🦄 Generating facts...", {
+  //     position: "top-right",
+  //     autoClose: 5000,
+  //     hideProgressBar: false,
+  //     closeOnClick: true,
+  //     pauseOnHover: true,
+  //     draggable: true,
+  //   });
+  // }
+
+  handleGenerateFacts = async () => {
+    toast("Generating facts...");
+    try {
+      await this.props.handleGenerateFacts();
+      toast("Done");
+    } catch (e) {
+      toast("Some error occurred");
+    }
+  };
+
+  handleGenerateDiff = async () => {
+    toast("Generating diff...");
+    try {
+      await this.props.handleGenerateDiff();
+      toast("Done");
+    } catch (e) {
+      toast("Some error occurred");
+    }
+  };
 
   render() {
-    const { visView, highlightedEntityId } = this.props;
+    const {
+      visView,
+      highlightedEntityId,
+      enableGenerateDiffButton,
+      enableGenerateFactsButton,
+    } = this.props;
     if (!visView) {
       return (
         <div className={cx(styles.container, styles.visView)}>
           <button
-            onClick={() => {
-              this.props.handleGenerateFacts();
-              this.toastTest();
-            }}
+            disabled={!enableGenerateFactsButton}
+            onClick={this.handleGenerateFacts}
           >
             Generate Facts
           </button>
-          <button disabled>Generate Diff</button>
+          <button
+            disabled={!enableGenerateDiffButton}
+            onClick={this.handleGenerateDiff}
+          >
+            Generate Diff
+          </button>
         </div>
       );
     }

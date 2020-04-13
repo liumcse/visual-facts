@@ -4,15 +4,7 @@ import { Commit } from "nodegit";
 
 import * as styles from "./style.scss";
 
-export default function CommitInfoBox({
-  commit,
-  handleGenerateFacts,
-  enableHandleGenerateFacts,
-}: {
-  commit?: Commit;
-  handleGenerateFacts: () => void;
-  enableHandleGenerateFacts: boolean;
-}) {
+export default function CommitInfoBox({ commit }: { commit?: Commit }) {
   return (
     <div className={styles.container}>
       <span className={styles.noNewLine}>

@@ -1,5 +1,5 @@
 import * as React from "react";
-import { ToastContainer } from "react-toastify";
+import { ToastContainer, toast } from "react-toastify";
 import { Repository, Commit } from "nodegit";
 import GitSelection from "@root/components/GitSelection";
 import CommitList from "./CommitList";
@@ -111,22 +111,26 @@ class App extends React.Component<Props, State> {
   }
 
   async componentDidUpdate(prevProps: Props) {
-    if (prevProps.selectedPath !== this.props.selectedPath) {
-      // If selectedPath changed, clear diff
-      // this.props.updateDiff({});
-    }
     if (prevProps.pathToRepo !== this.props.pathToRepo) {
-      // If repo changed, pull branches and load commit history
+      // If repo changed, pull branches and load commit history, clear state
       const { pathToRepo } = this.props;
       const repo = await loadRepo(pathToRepo);
       const remoteBranches = await loadBranches(repo);
-      await this.setStateAsync({ repo, remoteBranches });
+      await this.setStateAsync({
+        repo,
+        remoteBranches,
+        selectedPath: null,
+        diff: null,
+        showDiff: false,
+      });
+      // Clear graph
+      this.props.updateRelationGraph(new RelationGraph());
       await this.loadCommitHistory("refs/remotes/origin/" + remoteBranches[0]);
     }
   }
 
   handleGenerateFacts = async () => {
-    if (!this.state.selectedCommitIndex) return;
+    if (this.state.selectedCommitIndex === undefined) return;
     const repoUrl = await getRepoURL(this.props.pathToRepo);
     const commitHash = this.state.commitHistory[this.state.selectedCommitIndex]
       .id()
@@ -136,8 +140,57 @@ class App extends React.Component<Props, State> {
     this.props.updateRelationGraph(newGraph);
   };
 
-  handleCommitTabClick = (index: number) => {
-    this.setState({ selectedCommitIndex: index });
+  handleGenerateDiff = async () => {
+    if (
+      this.state.selectedCommitIndex === undefined ||
+      this.state.selectedCommitIndexToCompare === undefined
+    ) {
+      return;
+    }
+    const repoUrl = await getRepoURL(this.props.pathToRepo);
+    const commitHashNew = this.state.commitHistory[
+      this.state.selectedCommitIndex
+    ]
+      .id()
+      .toString();
+    const commitHashOld = this.state.commitHistory[
+      this.state.selectedCommitIndexToCompare
+    ]
+      .id()
+      .toString();
+    const oldFacts = await getFacts(repoUrl, commitHashOld);
+    const newFacts = await getFacts(repoUrl, commitHashNew);
+    const oldGraph = RelationGraph.createGraphFromFacts(oldFacts);
+    const newGraph = RelationGraph.createGraphFromFacts(newFacts);
+    const diff = RelationGraph.diff(oldGraph, newGraph);
+    newGraph.applyDiff(diff, oldGraph);
+    this.props.updateRelationGraph(newGraph);
+    this.props.updateDiff(diff);
+  };
+
+  handleCommitTabClick = (e: any, index: number) => {
+    console.log(e.shiftKey);
+    if (
+      e.shiftKey &&
+      this.state.selectedCommitIndex !== undefined &&
+      this.state.selectedCommitIndex !== index
+    ) {
+      if (index < this.state.selectedCommitIndex) {
+        toast("Please select an older commit");
+      } else {
+        this.setState({ selectedCommitIndexToCompare: index });
+      }
+    } else if (index !== this.state.selectedCommitIndex) {
+      this.setState({
+        selectedCommitIndex: index,
+        selectedCommitIndexToCompare: undefined,
+      });
+    } else {
+      this.setState({
+        selectedCommitIndex: undefined,
+        selectedCommitIndexToCompare: undefined,
+      });
+    }
   };
 
   handleToggle = (e: any) => {
@@ -145,24 +198,9 @@ class App extends React.Component<Props, State> {
   };
 
   __handleShowDiff() {
-    // delete this function later
+    // Refactor this function later
     // Toggle showDiff
     this.props.toggleShowDiff(!this.props.showDiff);
-    console.log("Toggling show diff");
-    // if (this.props.diff) return;
-    // Create and update diff
-    const oldGraph = RelationGraph.createGraphFromFactsTupleFile(
-      "/Users/ming/Desktop/FYP/app/src/dummyData/dep-csv-old.ta",
-    );
-    const diff = RelationGraph.diff(oldGraph, this.props.relationGraph);
-    // Update relation graph
-    const newGraph: RelationGraph = Object.assign(
-      new RelationGraph(),
-      this.props.relationGraph,
-    );
-    newGraph.applyDiff(diff, oldGraph);
-    this.props.updateRelationGraph(newGraph);
-    this.props.updateDiff(diff);
   }
 
   render() {
@@ -190,30 +228,31 @@ class App extends React.Component<Props, State> {
               ) : (
                 <CommitList
                   commits={commitHistory}
-                  selected={[
-                    this.state.selectedCommitIndex,
-                    this.state.selectedCommitIndexToCompare,
-                  ]}
+                  selected={this.state.selectedCommitIndex}
+                  selectedSecondary={this.state.selectedCommitIndexToCompare}
                   handleCommitTabClick={this.handleCommitTabClick}
                 />
               )}
             </div>
             <div className={styles.leftLower}>
               <StatusBar
+                enableGenerateFactsButton={
+                  this.state.selectedCommitIndex !== undefined
+                }
+                enableGenerateDiffButton={
+                  this.state.selectedCommitIndex !== undefined &&
+                  this.state.selectedCommitIndexToCompare !== undefined
+                }
                 visView={displayVisualization}
                 handleGenerateFacts={this.handleGenerateFacts}
+                handleGenerateDiff={this.handleGenerateDiff}
               />
             </div>
           </div>
           <div className={styles.rightPane}>
             <CommitInfoBox
-              enableHandleGenerateFacts={
-                typeof this.state.selectedCommitIndex !== "undefined" &&
-                !!this.props.pathToRepo
-              }
-              handleGenerateFacts={this.handleGenerateFacts}
               commit={
-                selectedCommitIndex
+                selectedCommitIndex !== undefined
                   ? commitHistory[selectedCommitIndex]
                   : undefined
               }
