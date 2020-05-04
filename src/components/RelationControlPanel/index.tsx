@@ -20,7 +20,7 @@ class RelationControlPanel extends React.Component<Props> {
 
   render() {
     return (
-      <div>
+      <div id="relation-control-panel">
         <div className={styles.toggleContainer}>
           <Toggle
             checked={this.props.displayVisualization}

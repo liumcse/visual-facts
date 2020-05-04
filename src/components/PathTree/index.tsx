@@ -102,7 +102,7 @@ function PathTree(props: Props) {
     // Clickable if there is any non-package entity under the node
     const clickable =
       node.children.length > 0 &&
-      node.children.some(treeNode => treeNode.entityType);
+      node.children.some((treeNode) => treeNode.entityType);
     const highlight =
       selectedPath && isChildPath(node.path.slice(1), selectedPath);
 
@@ -153,7 +153,7 @@ function PathTree(props: Props) {
 
   const { relationGraph, showDiff } = props;
   if (!relationGraph) {
-    return <div className={styles.container}>Initializing</div>;
+    return <div className={styles.container}></div>;
   }
   const trie = relationGraph.getTrie();
   const pathTreeNode = convertTrieToPathTreeNode(trie, !showDiff);
@@ -177,8 +177,8 @@ function mapStateToProps(state: any) {
 
 function mapDispatchToProps(dispatch: Function) {
   return {
-    updateSelectedPath: (selectedPath: string) =>
-      dispatch(updateSelectedPath(selectedPath)),
+    updateSelectedPath: (_selectedPath: string) =>
+      dispatch(updateSelectedPath(_selectedPath)),
     updateHighlightedEntityId: (entityId: string) =>
       dispatch(updateHighlightedEntityId(entityId)),
   };

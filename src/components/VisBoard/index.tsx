@@ -492,7 +492,7 @@ class VisBoard extends React.Component<Props, State> {
             width: width || 0,
           }}
         />
-        <button
+        {/* <button
           className={styles.zoomOut}
           onClick={() => {
             this.setState({
@@ -513,7 +513,7 @@ class VisBoard extends React.Component<Props, State> {
           }}
         >
           -
-        </button>
+        </button> */}
       </div>
     );
   }

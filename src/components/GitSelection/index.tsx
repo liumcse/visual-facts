@@ -42,6 +42,7 @@ class GitSelection extends React.Component<Props, any> {
         label: branchName,
         value: "refs/remotes/origin/" + branchName,
       }));
+    console.log("Default value", options && options[0]);
     return (
       <div className={styles.container}>
         <div className={styles.repoContainer}>
@@ -54,26 +55,28 @@ class GitSelection extends React.Component<Props, any> {
             {repoName || "Select Repo"}
           </div>
         </div>
-        <div className={styles.branchContainer}>
-          <div className={styles.label}>branch</div>
-          <div>
-            <Select
-              defaultValue={options[0]}
-              className={styles.select}
-              components={{
-                DropdownIndicator: props => (
-                  <components.DropdownIndicator {...props}>
-                    <span>↓</span>
-                  </components.DropdownIndicator>
-                ),
-              }}
-              onChange={(newValue?: { value: string; label: string }) => {
-                if (newValue) this.props.loadCommitHistory(newValue.value);
-              }}
-              options={options}
-            />
+        {options.length > 0 && (
+          <div className={styles.branchContainer}>
+            <div className={styles.label}>branch</div>
+            <div>
+              <Select
+                defaultValue={options[0]}
+                className={styles.select}
+                components={{
+                  DropdownIndicator: (props) => (
+                    <components.DropdownIndicator {...props}>
+                      <span>↓</span>
+                    </components.DropdownIndicator>
+                  ),
+                }}
+                onChange={(newValue?: { value: string; label: string }) => {
+                  if (newValue) this.props.loadCommitHistory(newValue.value);
+                }}
+                options={options}
+              />
+            </div>
           </div>
-        </div>
+        )}
       </div>
     );
   }

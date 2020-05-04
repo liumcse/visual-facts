@@ -12,7 +12,7 @@
 
   .lowerContainer {
     display: flex;
-    max-height: calc(100vh - 103px);
+    height: calc(100vh - 103px);
   }
 
   .leftPane {
@@ -45,7 +45,7 @@
   .pathTreeContainer {
     border-top: 1px solid #b4b4b4;
     // TODO: calculate exact max-weight
-    max-height: 100%;
+    // max-height: 100%;
     overflow-y: scroll;
   }
 }

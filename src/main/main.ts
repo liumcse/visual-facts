@@ -23,7 +23,7 @@ const createWindow = () => {
   mainWindow = new BrowserWindow({
     width: dimensions.width * 0.8,
     height: dimensions.height * 0.8,
-    title: "Untitled FYP",
+    title: "Visual Facts",
     backgroundColor: "#fff",
     webPreferences: {
       nodeIntegration: true,
@@ -34,7 +34,7 @@ const createWindow = () => {
   mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
 
   // Open the DevTools.
-  mainWindow.webContents.openDevTools();
+  // mainWindow.webContents.openDevTools();
 
   // Emitted when the window is closed.
   mainWindow.on("closed", () => {

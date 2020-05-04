@@ -90,24 +90,26 @@ class App extends React.Component<Props, State> {
   };
 
   async componentDidMount() {
-    const { pathToRepo } = this.props;
-    const repo = await loadRepo(
-      pathToRepo || "/Users/ming/Desktop/MOBLIMA/.git",
-    );
-    const remoteBranches = await loadBranches(repo);
-    await this.setStateAsync({ repo, remoteBranches });
-    await this.loadCommitHistory("refs/remotes/origin/" + remoteBranches[0]);
-    this.props.updateRelationGraph(
-      RelationGraph.createGraphFromFactsTupleFile(
-        "/Users/ming/Desktop/FYP/app/src/dummyData/dep-moblima.ta",
-      ),
-    );
+    // const { pathToRepo } = this.props;
+    // const repo = await loadRepo(
+    //   pathToRepo || "/Users/ming/Desktop/MOBLIMA/.git",
+    // );
+    // const remoteBranches = await loadBranches(repo);
+    // await this.setStateAsync({ repo: null, remoteBranches: [] });
+    // await this.loadCommitHistory("refs/remotes/origin/" + remoteBranches[0]);
+    // this.props.updateRelationGraph(
+    //   RelationGraph.createGraphFromFactsTupleFile(
+    //     "/Users/ming/Desktop/FYP/app/src/dummyData/dep-moblima.ta",
+    //   ),
+    // );
     // TODO: delete later
+    this.adjustPathTreeHeight();
     document.addEventListener("keydown", (event) => {
       if (event.keyCode === 68) {
         this.__handleShowDiff();
       }
     });
+    window.addEventListener("resize", this.adjustPathTreeHeight);
   }
 
   async componentDidUpdate(prevProps: Props) {
@@ -201,6 +203,39 @@ class App extends React.Component<Props, State> {
     // Refactor this function later
     // Toggle showDiff
     this.props.toggleShowDiff(!this.props.showDiff);
+  }
+
+  adjustPathTreeHeight() {
+    console.log("Called");
+    const pathTreeDOM = document.querySelector("." + styles.pathTreeContainer);
+    const lowerContainerDOM = document.querySelector(
+      "." + styles.lowerContainer,
+    );
+    const commitInfoBoxDOM = document.querySelector("#commit-info-box");
+    const relationControlPanelDOM = document.querySelector(
+      "#relation-control-panel",
+    );
+    console.log({
+      pathTreeDOM,
+      lowerContainerDOM,
+      commitInfoBoxDOM,
+      relationControlPanelDOM,
+    });
+    if (
+      !pathTreeDOM ||
+      !lowerContainerDOM ||
+      !commitInfoBoxDOM ||
+      !relationControlPanelDOM
+    ) {
+      return;
+    }
+
+    const resultantHeight =
+      lowerContainerDOM.clientHeight -
+      commitInfoBoxDOM.clientHeight -
+      relationControlPanelDOM?.clientHeight -
+      20;
+    pathTreeDOM.setAttribute("style", `max-height: ${resultantHeight}px`);
   }
 
   render() {
