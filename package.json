@@ -78,7 +78,7 @@
     "@emotion/styled": "^10.0.27",
     "@hot-loader/react-dom": "^16.11.0",
     "add": "^2.0.6",
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "closest": "^0.0.1",
     "electron-squirrel-startup": "^1.0.0",
     "file-loader": "^5.0.2",
