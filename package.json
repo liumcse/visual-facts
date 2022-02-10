@@ -85,7 +85,7 @@
     "lodash": "^4.17.15",
     "mathjs": "^6.6.0",
     "moment": "^2.24.0",
-    "node-sass": "^4.13.1",
+    "node-sass": "^7.0.0",
     "nodegit": "^0.26.4",
     "normalize.css": "^8.0.1",
     "pathfinding": "^0.4.18",
